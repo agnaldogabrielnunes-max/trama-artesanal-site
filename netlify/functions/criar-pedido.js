@@ -91,11 +91,11 @@ exports.handler = async function (event) {
 
   const subtotalComFrete = valorItens + resultadoFrete.frete;
 
-  // --- Desconto de 12% para pagamento à vista (Pix ou cartão em 1x) ---
+  // --- Desconto de 20% para pagamento à vista (Pix ou cartão em 1x) ---
   // Esta decisão é sempre tomada aqui no backend, nunca confiando em um
   // valor "já com desconto" vindo do navegador — assim ninguém consegue
   // manipular o desconto alterando o código no cliente.
-  const DESCONTO_AVISTA = 0.12;
+  const DESCONTO_AVISTA = 0.20;
   const temDesconto = metodoPagamento === 'PIX' || (metodoPagamento === 'CARTAO' && parcelas === 1);
   const valorDesconto = temDesconto ? subtotalComFrete * DESCONTO_AVISTA : 0;
   const valorTotal = subtotalComFrete - valorDesconto;
@@ -126,7 +126,7 @@ exports.handler = async function (event) {
     },
     items: itens.map((item, idx) => ({
       reference_id: `item-${idx}`,
-      name: temDesconto ? `${item.nome} (12% desc. à vista)` : item.nome,
+      name: temDesconto ? `${item.nome} (20% desc. à vista)` : item.nome,
       quantity: item.quantidade,
       unit_amount: centavos(item.precoUnitario * fatorDesconto),
     })),
