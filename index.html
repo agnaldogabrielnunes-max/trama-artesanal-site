@@ -426,6 +426,12 @@
     .galeria-seta{width:40px;height:40px;}
     .galeria-miniaturas img{width:46px;height:46px;}
   }
+.aba-row{display:flex;gap:8px;flex-wrap:wrap;margin:18px 0 6px;border-bottom:1px solid rgba(0,0,0,.08);padding-bottom:12px}
+.aba{font:inherit;font-size:.9rem;font-weight:600;padding:9px 16px;border-radius:999px;border:1.5px solid var(--moss,#3F5444);background:transparent;color:var(--moss,#3F5444);cursor:pointer}
+.aba span{font-weight:400;opacity:.7;margin-left:4px;font-size:.8em}
+.aba.active{background:var(--moss,#3F5444);color:#fff}
+.product-material{font-size:.78rem;color:var(--ink-soft);margin:-4px 0 8px}
+@media (max-width:640px){.aba-row{flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch}.aba{white-space:nowrap}}
 </style>
 <script src="https://assets.pagseguro.com.br/checkout-sdk-js/rc/dist/browser/pagseguro.min.js"></script>
 <script>
@@ -455,6 +461,18 @@
       <a href="https://www.instagram.com/moveistramaartesanal/" target="_blank" rel="noopener" aria-label="Instagram" title="Instagram" style="display:flex;align-items:center;gap:6px;">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.2" cy="6.8" r="1"/></svg>
         <span class="topbar-ig-handle">@moveistramaartesanal</span>
+      </a>
+      <a href="#" target="_blank" rel="noopener" aria-label="Facebook" title="Facebook">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M15 4h-2a4 4 0 0 0-4 4v3H6v3h3v7h3v-7h3l1-3h-4V8a1 1 0 0 1 1-1h3z"/></svg>
+      </a>
+      <a href="#" target="_blank" rel="noopener" aria-label="YouTube" title="YouTube">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="6" width="18" height="12" rx="4"/><path d="M11 10l4 2-4 2z" fill="currentColor" stroke="none"/></svg>
+      </a>
+      <a href="#" target="_blank" rel="noopener" aria-label="TikTok" title="TikTok">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 4v9.5a3.5 3.5 0 1 1-3.5-3.5"/><path d="M14 4c.4 2 2 3.5 4 3.8"/></svg>
+      </a>
+      <a href="#" target="_blank" rel="noopener" aria-label="Kwai" title="Kwai">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 4v16M5 12l8-8M5 12l8 8"/></svg>
       </a>
       <a href="https://api.whatsapp.com/send?phone=5544999104459" target="_blank" rel="noopener" aria-label="WhatsApp" title="WhatsApp">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 11.5a8.5 8.5 0 1 1-3.8-7.1"/><path d="M21 11.5c0 4.7-3.8 8.5-8.5 8.5a8.4 8.4 0 0 1-4-1L4 20l1.1-4.3a8.4 8.4 0 0 1-1.1-4.2C4 6.8 7.8 3 12.5 3"/></svg>
@@ -602,9 +620,10 @@
         <span class="eyebrow">Catálogo</span>
         <h2>Escolha as peças da sua área externa.</h2>
       </div>
-      <p style="color:var(--ink-soft);font-size:.88rem;max-width:300px;">319 itens organizados por categoria, com código, material e medidas reais de cada peça.</p>
+      <p style="color:var(--ink-soft);font-size:.88rem;max-width:300px;" id="catalogCount">Peças organizadas por linha e categoria, com código, material e medidas reais.</p>
     </div>
 
+    <div class="aba-row" id="abaRow" role="tablist" aria-label="Linhas de produtos"></div>
     <div class="catalog-filters">
       <div class="chip-row" id="chipRow">
         <button class="chip active" data-cat="todos">Todos</button>
@@ -616,6 +635,8 @@
         <button class="chip" data-cat="balanco">Balanços</button>
         <button class="chip" data-cat="banqueta">Banquetas &amp; Bistrôs</button>
         <button class="chip" data-cat="espreguicadeira">Espreguiçadeiras</button>
+        <button class="chip" data-cat="centro-lateral">Mesas de Centro &amp; Laterais</button>
+        <button class="chip" data-cat="puff">Puffs &amp; Bancos</button>
         <button class="chip" data-cat="acessorio">Acessórios</button>
         <button class="chip" data-cat="tampo-ombrelone">Tampos &amp; Ombrelones</button>
       </div>
@@ -699,6 +720,9 @@
         <div class="social-row" style="margin-top:18px;flex-wrap:wrap;">
           <a href="https://www.instagram.com/moveistramaartesanal/" target="_blank" rel="noopener" aria-label="Instagram" style="gap:6px;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/></svg><span style="font-size:.82rem;">Instagram</span></a>
           <a href="https://api.whatsapp.com/send?phone=5544999104459" target="_blank" rel="noopener" aria-label="WhatsApp" style="gap:6px;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 11.5a8.5 8.5 0 1 1-3.8-7.1"/><path d="M21 11.5c0 4.7-3.8 8.5-8.5 8.5a8.4 8.4 0 0 1-4-1L4 20l1.1-4.3a8.4 8.4 0 0 1-1.1-4.2C4 6.8 7.8 3 12.5 3"/></svg><span style="font-size:.82rem;">WhatsApp</span></a>
+          <a href="#" aria-label="Facebook"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M15 4h-2a4 4 0 0 0-4 4v3H6v3h3v7h3v-7h3l1-3h-4V8a1 1 0 0 1 1-1h3z"/></svg></a>
+          <a href="#" aria-label="YouTube"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="6" width="18" height="12" rx="4"/></svg></a>
+          <a href="#" aria-label="TikTok"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 4v9.5a3.5 3.5 0 1 1-3.5-3.5"/></svg></a>
         </div>
       </div>
       <div>
@@ -1010,11 +1034,16 @@
     {slug:'balanco', title:'Balanços', tipos:['Balanço']},
     {slug:'banqueta', title:'Banquetas & Bistrôs', tipos:['Banqueta/Bistrô']},
     {slug:'espreguicadeira', title:'Espreguiçadeiras', tipos:['Espreguiçadeira']},
+    {slug:'centro-lateral', title:'Mesas de Centro & Laterais', tipos:['Mesa de Centro/Lateral']},
+    {slug:'puff', title:'Puffs & Bancos', tipos:['Puff/Banco']},
     {slug:'acessorio', title:'Acessórios', tipos:['Acessório']},
     {slug:'tampo-ombrelone', title:'Tampos & Ombrelones', tipos:['Tampo','Ombrelone']},
   ];
 
   let activeMaterial = 'todos';
+  let activeAba = 'Trama Artesanal';
+  const ABA_PADRAO = 'Trama Artesanal';
+  function abaDe(g){ return g.aba || ABA_PADRAO; }
   let searchTerm = '';
 
   function setMaterial(v){ activeMaterial = v; renderGrid(); }
@@ -1022,7 +1051,7 @@
   function groupMatchesSearch(g){
     if(!searchTerm) return true;
     const t = searchTerm.toLowerCase();
-    if(g.code.toLowerCase().includes(t) || g.tipo.toLowerCase().includes(t) || g.categoria.toLowerCase().includes(t)) return true;
+    if(g.code.toLowerCase().includes(t) || g.tipo.toLowerCase().includes(t) || g.categoria.toLowerCase().includes(t) || (g.nome||'').toLowerCase().includes(t)) return true;
     return g.itens.some(i => i.nome.toLowerCase().includes(t));
   }
 
@@ -1063,19 +1092,34 @@
           ${visualContent}
         </div>
         <div class="product-body">
-          <h3>${g.categoria}</h3>
+          <h3>${g.nome || g.categoria}</h3>${g.nome ? `<div class="product-material">${g.categoria}</div>` : ''}
           ${rows}
         </div>
       </div>`;
   }
 
+  function renderAbas(){
+    const el = document.getElementById('abaRow');
+    if(!el) return;
+    const cont = {};
+    CATALOG_GROUPS.forEach(g => { const a = abaDe(g); cont[a] = (cont[a]||0) + 1; });
+    const abas = Object.keys(cont).sort((a,b) => a === ABA_PADRAO ? -1 : b === ABA_PADRAO ? 1 : a.localeCompare(b,'pt-BR'));
+    const total = CATALOG_GROUPS.length;
+    el.innerHTML = abas.map(a => `<button class="aba${a===activeAba?' active':''}" role="tab" aria-selected="${a===activeAba}" data-aba="${a}">${a} <span>${cont[a]}</span></button>`).join('')
+      + `<button class="aba${activeAba==='todas'?' active':''}" role="tab" aria-selected="${activeAba==='todas'}" data-aba="todas">Todas as linhas <span>${total}</span></button>`;
+    const txt = document.getElementById('catalogCount');
+    if(txt) txt.textContent = `${total} peças em ${abas.length} ${abas.length===1?'linha':'linhas'}, organizadas por categoria, com código, material e medidas reais.`;
+  }
+
   function renderGrid(){
+    renderAbas();
     const wrap = document.getElementById('catalogSections');
     const empty = document.getElementById('catalogEmpty');
     let anyVisible = false;
     wrap.innerHTML = SECTIONS.map(sec => {
       const groups = CATALOG_GROUPS.filter(g =>
         sec.tipos.includes(g.tipo) &&
+        (activeAba === 'todas' || abaDe(g) === activeAba) &&
         (activeMaterial === 'todos' || g.categoria === activeMaterial) &&
         groupMatchesSearch(g)
       );
@@ -1092,6 +1136,13 @@
     }).join('');
     empty.style.display = anyVisible ? 'none' : 'block';
   }
+
+  document.getElementById('abaRow').addEventListener('click', (e) => {
+    const b = e.target.closest('.aba');
+    if(!b) return;
+    activeAba = b.dataset.aba;
+    renderGrid();
+  });
 
   document.getElementById('chipRow').addEventListener('click', (e) => {
     const chip = e.target.closest('.chip');
@@ -1547,7 +1598,7 @@
   async function syncPricesFromDatabase(){
     try {
       const resp = await fetch(
-        `${SUPABASE_URL}/rest/v1/produtos?select=codigo,tipo,categoria,produto_itens(nome,preco,medida,ordem),produto_fotos(url,ordem)`,
+        `${SUPABASE_URL}/rest/v1/produtos?select=codigo,tipo,categoria,nome_exibicao,aba,ativo,ordem,produto_itens(nome,preco,medida,ordem),produto_fotos(url,ordem)&ativo=eq.true&order=ordem`,
         { headers: { apikey: SUPABASE_ANON_KEY } }
       );
       if(!resp.ok) return false;
@@ -1556,9 +1607,22 @@
       data.forEach(p => { byCode[p.codigo] = p; });
 
       let changed = false;
+      // Produtos que existem só no banco (catálogos de fornecedores) entram no site automaticamente
+      const conhecidos = new Set(CATALOG_GROUPS.map(g => g.code));
+      data.forEach(p => {
+        if(conhecidos.has(p.codigo)) return;
+        const itens = (p.produto_itens || []).sort((a,b)=>(a.ordem||0)-(b.ordem||0))
+          .map(i => ({ nome: i.nome, preco: Number(i.preco), medida: i.medida || '' }));
+        if(itens.length === 0) return;
+        const fotos = (p.produto_fotos || []).sort((a,b)=>(a.ordem||0)-(b.ordem||0)).map(f => f.url);
+        CATALOG_GROUPS.push({ code: p.codigo, tipo: p.tipo, categoria: p.categoria || 'Outros',
+          nome: p.nome_exibicao || '', aba: p.aba || ABA_PADRAO, itens, fotos, imagem: fotos[0] });
+        changed = true;
+      });
       CATALOG_GROUPS.forEach(g => {
         const dbProduct = byCode[g.code];
         if(!dbProduct) return;
+        if(dbProduct.aba && dbProduct.aba !== g.aba){ g.aba = dbProduct.aba; changed = true; }
         if(dbProduct.tipo && dbProduct.tipo !== g.tipo){ g.tipo = dbProduct.tipo; changed = true; }
         if(dbProduct.categoria && dbProduct.categoria !== g.categoria){ g.categoria = dbProduct.categoria; changed = true; }
         if(dbProduct.produto_itens && dbProduct.produto_itens.length > 0){
