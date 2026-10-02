@@ -922,7 +922,7 @@ footer.rodape .base{margin-top:56px;padding-top:22px;border-top:1px solid var(--
       <h4>Forma de pagamento</h4>
       <div class="metodo-pagamento">
         <button class="metodo-btn active" id="btnMetodoPix" onclick="selecionarMetodo('PIX')">Pix</button>
-        <button class="metodo-btn" id="btnMetodoCartao" disabled title="Em manutenção — pagamento com cartão volta em breve" style="opacity:.5; cursor:not-allowed;">Cartão de crédito (em breve)</button>
+        <button class="metodo-btn" id="btnMetodoCartao" onclick="selecionarMetodo('CARTAO')" disabled title="Em manutenção — pagamento com cartão volta em breve" style="opacity:.5; cursor:not-allowed;">Cartão de crédito (em breve)</button>
       </div>
 
       <div id="painelPix">
@@ -1271,6 +1271,15 @@ footer.rodape .base{margin-top:56px;padding-top:22px;border-top:1px solid var(--
     const footer = document.getElementById('cartFooter');
     const badge = document.getElementById('cartBadge');
     const totalQty = cart.reduce((s,c)=>s+c.qty,0);
+    // Cartão liberado só para o produto de teste de pagamento
+    const _bc = document.getElementById('btnMetodoCartao');
+    if(_bc){
+      const soTeste = cart.length > 0 && cart.every(c => String(c.id).startsWith('TESTE:'));
+      _bc.disabled = !soTeste;
+      _bc.style.opacity = soTeste ? '1' : '.5';
+      _bc.style.cursor = soTeste ? 'pointer' : 'not-allowed';
+      _bc.textContent = soTeste ? 'Cartão de crédito' : 'Cartão de crédito (em breve)';
+    }
 
     const banner = document.getElementById('cartCnpjBanner');
     if(banner){
