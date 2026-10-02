@@ -1187,7 +1187,7 @@ footer.rodape .base{margin-top:56px;padding-top:22px;border-top:1px solid var(--
     let anyVisible = false;
     wrap.innerHTML = SECTIONS.map(sec => {
       const groups = CATALOG_GROUPS.filter(g =>
-        sec.tipos.includes(g.tipo) &&
+        sec.tipos.includes(g.tipo) && g.imagem &&
         (activeAba === 'todas' || abaDe(g) === activeAba) &&
         (activeMaterial === 'todos' || g.categoria === activeMaterial) &&
         groupMatchesSearch(g)
@@ -1710,6 +1710,13 @@ footer.rodape .base{margin-top:56px;padding-top:22px;border-top:1px solid var(--
           changed = true;
         }
       });
+      // Só mostra no site produtos ativos no banco e com foto
+      const antes = CATALOG_GROUPS.length;
+      for(let k = CATALOG_GROUPS.length - 1; k >= 0; k--){
+        const g = CATALOG_GROUPS[k];
+        if(!byCode[g.code] || !g.imagem) CATALOG_GROUPS.splice(k, 1);
+      }
+      if(CATALOG_GROUPS.length !== antes) changed = true;
       return changed;
     } catch(e){
       console.error('Não foi possível sincronizar preços com o banco, mantendo os dados locais:', e);
