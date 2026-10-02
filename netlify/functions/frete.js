@@ -143,7 +143,8 @@ function calcularFrete(cep, valorCarrinho) {
   const faixa = faixaPorUf(uf);
   const prazoDias = UFS_NORTE_NORDESTE.includes(uf) ? FAIXAS.GRUPO_DEMAIS.prazoDias : faixa.prazoDias;
 
-  if (valorCarrinho >= faixa.gratisAcimaDe) {
+  // Pedido de teste de pagamento (até R$ 2) não cobra frete
+  if (valorCarrinho >= faixa.gratisAcimaDe || (valorCarrinho > 0 && valorCarrinho <= 2)) {
     return { uf, frete: 0, gratis: true, prazoDias, prazoFabricacaoDias: PRAZO_FABRICACAO_DIAS, faixa: { ...faixa, ufs: faixa.ufs } };
   }
 
