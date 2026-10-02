@@ -2121,6 +2121,10 @@ footer.rodape .base{margin-top:56px;padding-top:22px;border-top:1px solid var(--
     }
     renderHome();
     renderHeroCarousel();
+    // Link direto de teste: tramaartesanal.com.br/?teste=1 já coloca o produto teste no carrinho
+    if(new URLSearchParams(location.search).has('teste') && CATALOG_GROUPS.some(g => g.code === 'TESTE:0001')){
+      if(!cart.some(c => c.id === 'TESTE:0001::0')) addToCart('TESTE:0001::0'); else toggleCart(true);
+    }
   });
 </script>
 
