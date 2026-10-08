@@ -19,6 +19,20 @@ async function sb(path) {
   return r.json();
 }
 
+// O banco agrupa linhas inteiras (ex.: "Poltrona Atlântica") sob tipo "Sofá": deduz o tipo real pelo nome.
+function tipoReal(nome, tipo) {
+  const n = String(nome || "");
+  if (/^Poltrona/i.test(n)) return "Poltrona";
+  if (/^Chaise/i.test(n)) return "Chaise";
+  if (/^(Puff|Banco\b)/i.test(n)) return "Puff/Banco";
+  if (/^(Sofá|Módulo|Cantoneira)/i.test(n)) return "Sofá";
+  if (/^Espregui/i.test(n)) return "Espreguiçadeira";
+  if (/^Banqueta/i.test(n)) return "Banqueta/Bistrô";
+  if (/^Cadeira/i.test(n)) return "Cadeira";
+  if (/^Mesa de (centro|canto|apoio)|^Mesa lateral/i.test(n)) return "Mesa de Centro/Lateral";
+  if (/^(Mesa|Jogo)/i.test(n) && !/^Jogo de Sofá/i.test(n)) return tipo === "Mesa de Centro/Lateral" ? tipo : "Mesa";
+  return tipo;
+}
 let cache = { t: 0, lista: null };
 async function carregarProdutos() {
   if (cache.lista && Date.now() - cache.t < 10 * 60 * 1000) return cache.lista;
@@ -36,12 +50,13 @@ async function carregarProdutos() {
     const itens = (p.produto_itens || []).filter(i => Number(i.preco) > 0).sort((a, b) => a.preco - b.preco);
     const fotos = (p.produto_fotos || []).sort((a, b) => (a.ordem ?? 99) - (b.ordem ?? 99)).map(f => f.url);
     if (!itens.length || !fotos.length) continue;
-    const nome = p.nome_exibicao || `${p.tipo} ${p.categoria}`;
+    const tipo = tipoReal(p.nome_exibicao, p.tipo);
+    const nome = p.nome_exibicao || `${tipo}${MATERIAL[p.categoria] ? " em " + MATERIAL[p.categoria] : " " + p.categoria} ${p.codigo.replace(/^\D+[:_]?/, "")}`;
     let slug = `${slugify(nome)}-${slugify(p.codigo)}`;
     if (usados.has(slug)) slug += "-" + p.id.slice(0, 4);
     usados.add(slug);
     lista.push({
-      id: p.id, codigo: p.codigo, tipo: p.tipo, categoria: p.categoria, nome, slug,
+      id: p.id, codigo: p.codigo, tipo, categoria: p.categoria, nome, slug,
       marca: p.fornecedor?.nome && p.fornecedor.nome !== "Importados Trama" ? p.fornecedor.nome : "Trama Artesanal",
       proprio: !p.fornecedor,
       itens, fotos, menor: Number(itens[0].preco),
