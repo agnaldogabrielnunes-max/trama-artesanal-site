@@ -29,4 +29,4 @@ Allow: /
 User-agent: meta-externalagent
 Allow: /
 
-Sitemap: https://www.tramaartesanal.com.br/sitemap.xml
+Sitemap: https://tramaartesanal.com.br/sitemap.xml

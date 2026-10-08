@@ -2,7 +2,7 @@
 // Fonte única de: produtos publicáveis, slugs, títulos, descrições e páginas de categoria.
 const SB_URL = "https://qgunpfgdsqqgfkimvwhg.supabase.co";
 const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFndW5wZmdkc3FxZ2ZraW12d2hnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIzMjQyMjIsImV4cCI6MjA5NzkwMDIyMn0.LUbnqiP1DPS1GEPrX5KYjHNYQeL_6V0bVgCzlEg49-Q";
-const SITE = "https://www.tramaartesanal.com.br";
+const SITE = "https://tramaartesanal.com.br";
 const WHATSAPP = "5544999104459";
 
 const esc = (s) => String(s ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
