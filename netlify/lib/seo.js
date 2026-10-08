@@ -10,6 +10,7 @@ const fmt = (v) => Number(v).toLocaleString("pt-BR", { style: "currency", curren
 const slugify = (s) => String(s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
 
 const MATERIAL = { "Corda Náutica": "corda náutica", "Alumínio": "alumínio", "Fibra Sintética": "fibra sintética", "Tela Sling": "tela sling", "Madeira": "madeira" };
+const MARCAS = { CAL: "Calli Móveis", ECO: "Eco Flame", LDK: "Little Duck", LOV: "Lovato Móveis", SCA: "Scaburi", SNC: "Sofá na Caixa" };
 const EXCLUIR_TIPOS = new Set(["Saarinen"]);
 const EXCLUIR_CATEGORIAS = new Set(["Office"]);
 
@@ -38,7 +39,7 @@ async function carregarProdutos() {
   if (cache.lista && Date.now() - cache.t < 10 * 60 * 1000) return cache.lista;
   const out = [];
   for (let off = 0; off < 3000; off += 1000) {
-    const rows = await sb(`produtos?select=id,codigo,tipo,categoria,nome_exibicao,ordem,fornecedor:fornecedores(nome),produto_itens(nome,preco,medida,ordem),produto_fotos(url,ordem,is_principal)&ativo=eq.true&order=ordem,codigo&limit=1000&offset=${off}`);
+    const rows = await sb(`produtos?select=id,codigo,tipo,categoria,nome_exibicao,ordem,produto_itens(nome,preco,medida,ordem),produto_fotos(url,ordem,is_principal)&ativo=eq.true&order=ordem,codigo&limit=1000&offset=${off}`);
     out.push(...rows);
     if (rows.length < 1000) break;
   }
@@ -46,10 +47,11 @@ async function carregarProdutos() {
   const usados = new Set();
   for (const p of out) {
     if (EXCLUIR_TIPOS.has(p.tipo) || EXCLUIR_CATEGORIAS.has(p.categoria)) continue;
-    if (/teste/i.test(p.nome_exibicao || "")) continue;
+    if (/teste/i.test(p.nome_exibicao || "") || /^TESTE/.test(p.codigo)) continue;
     const itens = (p.produto_itens || []).filter(i => Number(i.preco) > 0).sort((a, b) => a.preco - b.preco);
     const fotos = (p.produto_fotos || []).sort((a, b) => (a.ordem ?? 99) - (b.ordem ?? 99)).map(f => f.url);
     if (!itens.length || !fotos.length) continue;
+    const pref = String(p.codigo).split(":")[0];
     const tipo = tipoReal(p.nome_exibicao, p.tipo);
     const nome = p.nome_exibicao || `${tipo}${MATERIAL[p.categoria] ? " em " + MATERIAL[p.categoria] : " " + p.categoria} ${p.codigo.replace(/^\D+[:_]?/, "")}`;
     let slug = `${slugify(nome)}-${slugify(p.codigo)}`;
@@ -57,8 +59,8 @@ async function carregarProdutos() {
     usados.add(slug);
     lista.push({
       id: p.id, codigo: p.codigo, tipo, categoria: p.categoria, nome, slug,
-      marca: p.fornecedor?.nome && p.fornecedor.nome !== "Importados Trama" ? p.fornecedor.nome : "Trama Artesanal",
-      proprio: !p.fornecedor,
+      marca: MARCAS[pref] || "Trama Artesanal",
+      proprio: !MARCAS[pref],
       itens, fotos, menor: Number(itens[0].preco),
     });
   }
