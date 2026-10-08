@@ -690,7 +690,7 @@ footer.rodape .base{margin-top:56px;padding-top:22px;border-top:1px solid var(--
 
 <!-- ============ HERO ============ -->
 <section class="hero2" id="hero2">
-  <div class="slide on"><img src="https://qgunpfgdsqqgfkimvwhg.supabase.co/storage/v1/object/public/social/site/scaburi-lazio-ambiente.png" alt="Ambiente com móveis Scaburi" fetchpriority="high"></div><div class="slide"><img src="https://qgunpfgdsqqgfkimvwhg.supabase.co/storage/v1/object/public/social/site/hero-ecoflame-ambiente.webp" alt="Ambiente com puffs e sofá Eco Flame" loading="lazy"></div><div class="slide"><img src="https://qgunpfgdsqqgfkimvwhg.supabase.co/storage/v1/object/public/produtos/CONJ_0009_2.webp" alt="Ambiente com móveis Trama Artesanal" loading="lazy"></div><div class="slide"><img src="https://qgunpfgdsqqgfkimvwhg.supabase.co/storage/v1/object/public/produtos/CHA_0012_3.webp" alt="Ambiente com móveis Trama Artesanal" loading="lazy"></div><div class="slide"><img src="img/hero-sofa-na-caixa.jpg" alt="Sofá na Caixa — sofá modular" loading="lazy"></div><div class="slide"><img src="https://qgunpfgdsqqgfkimvwhg.supabase.co/storage/v1/object/public/produtos/CONJ_0064_2.webp" alt="Ambiente com móveis Trama Artesanal" loading="lazy"></div>
+  <div class="slide on"><img src="https://qgunpfgdsqqgfkimvwhg.supabase.co/storage/v1/object/public/social/site/scaburi-lazio-ambiente.png" alt="Ambiente com móveis Scaburi" fetchpriority="high"></div><div class="slide"><img src="https://qgunpfgdsqqgfkimvwhg.supabase.co/storage/v1/object/public/social/site/hero-ecoflame-ambiente.webp" alt="Ambiente com puffs e sofá Eco Flame" loading="lazy"></div><div class="slide"><img src="https://qgunpfgdsqqgfkimvwhg.supabase.co/storage/v1/object/public/produtos/CONJ_0009_2.webp" alt="Ambiente com móveis Trama Artesanal" loading="lazy"></div><div class="slide"><img src="img/combo-londres-verde.jpg" alt="Combo Londres verde — chaise, sofá e poltronas" loading="lazy"></div><div class="slide"><img src="img/hero-sofa-na-caixa.jpg" alt="Sofá na Caixa — sofá modular" loading="lazy"></div><div class="slide"><img src="https://qgunpfgdsqqgfkimvwhg.supabase.co/storage/v1/object/public/produtos/CONJ_0064_2.webp" alt="Ambiente com móveis Trama Artesanal" loading="lazy"></div>
   <button class="seta e" aria-label="Foto anterior" onclick="heroIr(-1)">‹</button>
   <button class="seta d" aria-label="Próxima foto" onclick="heroIr(1)">›</button>
   <div class="frase">
@@ -703,7 +703,7 @@ footer.rodape .base{margin-top:56px;padding-top:22px;border-top:1px solid var(--
 <!-- ============ SOBRE (split) ============ -->
 <section id="sobre">
   <div class="split">
-    <div class="foto" id="lovVid" style="position:relative;cursor:pointer" onclick="this.innerHTML='<iframe src=&quot;https://www.youtube-nocookie.com/embed/xNpRdj5pIlI?autoplay=1&amp;rel=0&quot; title=&quot;Quem somos nós? | Lovato&quot; style=&quot;position:absolute;inset:0;width:100%;height:100%;border:0&quot; allow=&quot;autoplay; encrypted-media; picture-in-picture&quot; allowfullscreen></iframe>'">
+    <div class="foto" id="lovVid" style="position:relative;cursor:pointer" onclick="lovPlay()">
       <img src="https://i.ytimg.com/vi/xNpRdj5pIlI/maxresdefault.jpg" onerror="this.onerror=null;this.src='https://i.ytimg.com/vi/xNpRdj5pIlI/hqdefault.jpg'" alt="Vídeo: Quem somos nós? Lovato" loading="lazy" style="width:100%;height:100%;object-fit:cover">
       <span style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center"><span style="width:76px;height:76px;border-radius:50%;background:rgba(255,255,255,.92);display:flex;align-items:center;justify-content:center;font-size:30px;color:#222;padding-left:6px">▶</span></span>
       <span style="position:absolute;left:14px;bottom:14px;background:rgba(0,0,0,.6);color:#fff;padding:6px 12px;border-radius:999px;font-size:.8rem">Conheça a Lovato</span>
@@ -2277,6 +2277,26 @@ footer.rodape .base{margin-top:56px;padding-top:22px;border-top:1px solid var(--
     if(ev.key === 'ArrowLeft') galeriaNavegar(-1);
     if(ev.key === 'ArrowRight') galeriaNavegar(1);
   });
+</script>
+<script>
+/* Vídeo da Lovato (YouTube) e, ao terminar, vídeo do Combo Londres */
+function lovPlay(){
+  var box=document.getElementById('lovVid'); if(!box||box.dataset.on) return; box.dataset.on='1'; box.style.cursor='default';
+  box.innerHTML='<div id="lovYT" style="position:absolute;inset:0"></div>';
+  function criar(){
+    new YT.Player('lovYT',{videoId:'xNpRdj5pIlI',host:'https://www.youtube-nocookie.com',width:'100%',height:'100%',
+      playerVars:{autoplay:1,rel:0,playsinline:1},
+      events:{onReady:function(e){e.target.playVideo();},onStateChange:function(e){if(e.data===0)lovProximo();}}});
+  }
+  if(window.YT&&YT.Player){criar();}
+  else{var prev=window.onYouTubeIframeAPIReady;window.onYouTubeIframeAPIReady=function(){if(prev)prev();criar();};
+    var t=document.createElement('script');t.src='https://www.youtube.com/iframe_api';document.head.appendChild(t);}
+}
+function lovProximo(){
+  var box=document.getElementById('lovVid');
+  box.innerHTML='<video src="video/londres-verde.mp4" controls autoplay playsinline style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#000"></video>';
+  var v=box.querySelector('video'); var p=v.play(); if(p&&p.catch)p.catch(function(){v.muted=true;v.play();});
+}
 </script>
 </body>
 </html>
