@@ -204,6 +204,9 @@
   .part-row{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;padding:9px 0;border-top:1px solid var(--line);}
   .part-info{flex:1;min-width:0;}
   .part-info .part-name{font-size:.84rem;font-weight:600;color:var(--ink);}
+  .opcoes{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 4px;}
+  .opc{border:1px solid var(--line,#cfd6cf);background:#fff;color:var(--ink,#16201a);font:inherit;font-size:.72rem;padding:5px 10px;cursor:pointer;border-radius:999px;}
+  .opc.on{background:var(--ink,#16201a);color:#fff;border-color:var(--ink,#16201a);}
   .part-info .part-medida{font-size:.72rem;color:var(--ink-soft);margin-top:1px;}
   .part-price{font-size:.8rem;color:var(--moss);font-weight:600;white-space:nowrap;margin-top:1px;}
   .part-add{margin-top:6px;display:flex;align-items:center;gap:8px;}
@@ -852,7 +855,7 @@ footer.rodape .base{margin-top:56px;padding-top:22px;border-top:1px solid var(--
       <div><h4>Atendimento</h4><ul><li>(44) 99910-4459</li><li><a href="mailto:sac@tramaartesanal.com.br">sac@tramaartesanal.com.br</a></li><li>Seg a Sáb, 8h–18h</li></ul></div>
       <div><h4>Compra</h4><ul><li>Pix com 20% de desconto</li><li>Frete grátis no PR acima de R$ 1.200</li><li>Garantia de até 2 anos</li><li><a href="#" onclick="abrirContaAtacado();return false;">Área do lojista (CNPJ)</a></li></ul></div>
     </div>
-    <div class="base"><span>© 2026 Trama Artesanal · LAR Móveis e Utilidades Ltda · CNPJ 58.372.997/0001-90 · Maringá/PR</span><span>Feito com Claude</span></div>
+    <div class="base"><span>© 2026 Trama Artesanal · LAR Móveis e Utilidades Ltda · CNPJ 58.372.997/0001-90 · Maringá/PR</span><span>Desenvolvido por <a href="https://www.instagram.com/larmarketingestrategico" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline">LAR Marketing Digital</a> · Agnaldo, Diretor de Marketing · <a href="https://wa.me/5544984064459" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline">(44) 98406-4459</a></span></div>
   </div>
 </footer>
 
@@ -1075,10 +1078,10 @@ footer.rodape .base{margin-top:56px;padding-top:22px;border-top:1px solid var(--
 </div>
 
 <!-- ============ SEARCH OVERLAY ============ -->
-<div class="search-overlay" id="searchOverlay" onclick="if(event.target===this) closeSearch();">
+<div class="search-overlay" id="searchOverlay" onclick="if(event.target===this) fecharBusca();">
   <div class="search-box">
-    <input type="text" id="searchInput" placeholder="Buscar sofás, poltronas, mesas..." oninput="liveSearch(this.value)" autocomplete="off">
-    <p class="search-hint">Pressione Esc para fechar · busca dentro do catálogo deste site</p>
+    <input type="text" id="searchInput" placeholder="Buscar sofás, poltronas, mesas..." oninput="liveSearch(this.value)" onkeydown="if(event.key==='Enter'){event.preventDefault();fecharBusca();}" autocomplete="off">
+    <p class="search-hint">Enter para ver os resultados · Esc para limpar</p>
   </div>
 </div>
 
@@ -1149,6 +1152,11 @@ footer.rodape .base{margin-top:56px;padding-top:22px;border-top:1px solid var(--
   function abaDe(g){ return g.aba || ABA_PADRAO; }
   let searchTerm = '';
 
+  function selOpcao(code, idx, k){
+    const g = CATALOG_GROUPS.find(x => x.code === code); if(!g || !g.itens[idx]) return;
+    g.itens[idx].sel = k;
+    const y = window.scrollY; renderGrid(); window.scrollTo(0, y);
+  }
   function setMaterial(v){ activeMaterial = v; renderGrid(); }
 
   function groupMatchesSearch(g){
@@ -1185,15 +1193,21 @@ footer.rodape .base{margin-top:56px;padding-top:22px;border-top:1px solid var(--
           </div>
         </div>`;
       }
+      const ops = it.opcoes && it.opcoes.length > 1 ? it.opcoes : null;
+      const so = ops ? Math.min(it.sel || 0, ops.length - 1) : -1;
+      const preco = ops ? Number(ops[so].p) : it.preco;
+      const cidSel = ops ? cid + '#' + so : cid;
+      const chips = ops ? `<div class="opcoes">${ops.map((o, k) => `<button type="button" class="opc${k===so?' on':''}" onclick="selOpcao('${g.code}', ${idx}, ${k})">${o.l}</button>`).join('')}</div>` : '';
       return `
         <div class="part-row">
           <div class="part-info">
             <div class="part-name">${it.nome}</div>
-            <div class="part-medida">${it.medida}</div>
-            <div class="part-price">${descontoAtacadoAtivo ? `<span style="text-decoration:line-through;color:var(--ink-soft);font-weight:400;font-size:.85em;margin-right:6px;">${formatBRL(it.preco)}</span>${formatBRL(precoFinal(it.preco))}` : formatBRL(it.preco)}</div>
+            ${it.medida ? `<div class="part-medida">${it.medida}</div>` : ''}
+            ${chips}
+            <div class="part-price">${descontoAtacadoAtivo ? `<span style="text-decoration:line-through;color:var(--ink-soft);font-weight:400;font-size:.85em;margin-right:6px;">${formatBRL(preco)}</span>${formatBRL(precoFinal(preco))}` : formatBRL(preco)}</div>
           </div>
           <div class="part-add">
-            <button class="part-add-btn" onclick="addToCart('${cid}', this)">
+            <button class="part-add-btn" onclick="addToCart('${cidSel}', this)">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 4h2l2.4 12.4a2 2 0 0 0 2 1.6h7.2a2 2 0 0 0 2-1.6L21 8H6"/></svg>
               Adicionar
             </button>
@@ -1245,8 +1259,8 @@ footer.rodape .base{margin-top:56px;padding-top:22px;border-top:1px solid var(--
     wrap.innerHTML = SECTIONS.map(sec => {
       const groups = CATALOG_GROUPS.filter(g =>
         sec.tipos.includes(g.tipo) && g.imagem &&
-        (activeAba === 'todas' || abaDe(g) === activeAba) &&
-        (activeMaterial === 'todos' || g.categoria === activeMaterial) &&
+        (searchTerm || activeAba === 'todas' || abaDe(g) === activeAba) &&
+        (searchTerm || activeMaterial === 'todos' || g.categoria === activeMaterial) &&
         groupMatchesSearch(g)
       );
       if(groups.length === 0) return '';
@@ -1287,12 +1301,15 @@ footer.rodape .base{margin-top:56px;padding-top:22px;border-top:1px solid var(--
   function findCartPart(cid){
     const sep = cid.indexOf('::');
     const code = cid.slice(0, sep);
-    const idx = parseInt(cid.slice(sep+2), 10);
+    const rest = cid.slice(sep+2).split('#');
+    const idx = parseInt(rest[0], 10);
     const group = CATALOG_GROUPS.find(g => g.code === code);
     if(!group) return null;
     const item = group.itens[idx];
     if(!item) return null;
-    return { id: cid, name: item.nome + ' — ' + group.code, precoBase: item.preco, price: precoFinal(item.preco), icon: ICON_BY_TIPO[group.tipo] || 'table' };
+    const op = rest[1] !== undefined && item.opcoes ? item.opcoes[parseInt(rest[1],10)] : null;
+    const base = op ? Number(op.p) : item.preco;
+    return { id: cid, name: item.nome + (op ? ' (' + op.l + ')' : '') + ' — ' + group.code, precoBase: base, price: precoFinal(base), icon: ICON_BY_TIPO[group.tipo] || 'table' };
   }
 
   function addToCart(id, btn){
@@ -1698,9 +1715,12 @@ footer.rodape .base{margin-top:56px;padding-top:22px;border-top:1px solid var(--
     renderGrid();
   }
   function liveSearch(value){
-    searchTerm = value;
+    searchTerm = value.trim();
     renderGrid();
-    document.getElementById('catalogo').scrollIntoView({behavior:'smooth', block:'start'});
+  }
+  function fecharBusca(){
+    document.getElementById('searchOverlay').classList.remove('show');
+    if(searchTerm) document.getElementById('catalogo').scrollIntoView({behavior:'smooth', block:'start'});
   }
   document.getElementById('openSearch').addEventListener('click', openSearchFn);
   document.addEventListener('keydown', (e) => {
@@ -1735,7 +1755,7 @@ footer.rodape .base{margin-top:56px;padding-top:22px;border-top:1px solid var(--
       let data = [];
       for(let off = 0; off < 5000; off += 1000){
         const resp = await fetch(
-          `${SUPABASE_URL}/rest/v1/produtos?select=codigo,tipo,categoria,nome_exibicao,aba,ativo,ordem,produto_itens(nome,preco,medida,ordem),produto_fotos(url,ordem)&ativo=eq.true&order=ordem,codigo&limit=1000&offset=${off}`,
+          `${SUPABASE_URL}/rest/v1/produtos?select=codigo,tipo,categoria,nome_exibicao,aba,ativo,ordem,produto_itens(nome,preco,medida,ordem,opcoes),produto_fotos(url,ordem)&ativo=eq.true&order=ordem,codigo&limit=1000&offset=${off}`,
           { headers: { apikey: SUPABASE_ANON_KEY } }
         );
         if(!resp.ok){ if(off === 0) return false; break; }
@@ -1752,7 +1772,7 @@ footer.rodape .base{margin-top:56px;padding-top:22px;border-top:1px solid var(--
       data.forEach(p => {
         if(conhecidos.has(p.codigo)) return;
         const itens = (p.produto_itens || []).sort((a,b)=>(a.ordem||0)-(b.ordem||0))
-          .map(i => ({ nome: i.nome, preco: Number(i.preco), medida: i.medida || '' }));
+          .map(i => ({ nome: i.nome, preco: Number(i.preco), medida: i.medida || '', opcoes: i.opcoes || null }));
         const fotos = (p.produto_fotos || []).sort((a,b)=>(a.ordem||0)-(b.ordem||0)).map(f => f.url).filter((u,i,a)=>a.indexOf(u)===i);
         CATALOG_GROUPS.push({ code: p.codigo, tipo: p.tipo, categoria: p.categoria || 'Outros',
           nome: p.nome_exibicao || '', aba: p.aba || ABA_PADRAO, itens, fotos, imagem: fotos[0] });
@@ -1769,7 +1789,8 @@ footer.rodape .base{margin-top:56px;padding-top:22px;border-top:1px solid var(--
           g.itens = ordenados.map(i => ({
             nome: i.nome,
             preco: Number(i.preco),
-            medida: i.medida || ''
+            medida: i.medida || '',
+            opcoes: i.opcoes || null
           }));
           changed = true;
         }
