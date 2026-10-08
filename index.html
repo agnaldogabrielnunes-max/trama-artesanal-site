@@ -209,6 +209,10 @@
   .opc.on{background:var(--ink,#16201a);color:#fff;border-color:var(--ink,#16201a);}
   .part-info .part-medida{font-size:.72rem;color:var(--ink-soft);margin-top:1px;}
   .part-price{font-size:.8rem;color:var(--moss);font-weight:600;white-space:nowrap;margin-top:1px;}
+  .part-price{white-space:normal !important;}
+  .part-price .pv-valor{font-family:'Fraunces',serif;font-size:1.2rem;font-weight:700;color:var(--moss);}
+  .part-price .pv-tag{font-size:.68rem;font-weight:700;letter-spacing:.02em;color:#fff;background:var(--moss);padding:2px 7px;border-radius:999px;vertical-align:middle;margin-left:4px;white-space:nowrap;}
+  .part-price .pv-card{font-size:.74rem;font-weight:400;color:var(--ink-soft);margin-top:2px;}
   .part-add{margin-top:6px;display:flex;align-items:center;gap:8px;}
   .part-add-btn{background:var(--ink);color:var(--white);border-radius:999px;padding:6px 12px;font-size:.72rem;font-weight:600;display:flex;align-items:center;gap:6px;transition:.15s;white-space:nowrap;}
   .part-add-btn:hover{background:var(--moss);}
@@ -1122,6 +1126,15 @@ footer.rodape .base{margin-top:56px;padding-top:22px;border-top:1px solid var(--
   function precoFinal(preco){
     return descontoAtacadoAtivo ? preco * 0.8 : preco;
   }
+  // Vitrine: destaca o preço já com o desconto à vista (Pix), igual ao que o checkout cobra.
+  const DESCONTO_PIX_VITRINE = 0.20;
+  function precoVitrineHTML(preco){
+    const normal = precoFinal(preco);
+    const pix = normal * (1 - DESCONTO_PIX_VITRINE);
+    const parcela = normal / 10;
+    return `<div class="pv-pix"><span class="pv-valor">${formatBRL(pix)}</span> <span class="pv-tag">no Pix · 20% OFF</span></div>`
+         + `<div class="pv-card">ou ${formatBRL(normal)} em 10x de ${formatBRL(parcela)} sem juros</div>`;
+  }
   function recalcularPrecosCarrinho(){
     cart.forEach(c => {
       if(typeof c.precoBase === 'number'){
@@ -1205,7 +1218,7 @@ footer.rodape .base{margin-top:56px;padding-top:22px;border-top:1px solid var(--
             <div class="part-name">${it.nome}</div>
             ${it.medida ? `<div class="part-medida">${it.medida}</div>` : ''}
             ${chips}
-            <div class="part-price">${descontoAtacadoAtivo ? `<span style="text-decoration:line-through;color:var(--ink-soft);font-weight:400;font-size:.85em;margin-right:6px;">${formatBRL(preco)}</span>${formatBRL(precoFinal(preco))}` : formatBRL(preco)}</div>
+            <div class="part-price">${precoVitrineHTML(preco)}</div>
           </div>
           <div class="part-add">
             <button class="part-add-btn" onclick="addToCart('${cidSel}', this)">
