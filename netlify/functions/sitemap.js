@@ -1,24 +1,16 @@
-// Sitemap dinâmico — Trama Artesanal
-// URL pública: https://www.tramaartesanal.com.br/sitemap.xml (redirect em netlify.toml)
-const SB_URL = "https://qgunpfgdsqqgfkimvwhg.supabase.co";
-const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFndW5wZmdkc3FxZ2ZraW12d2hnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIzMjQyMjIsImV4cCI6MjA5NzkwMDIyMn0.LUbnqiP1DPS1GEPrX5KYjHNYQeL_6V0bVgCzlEg49-Q";
-const SITE = "https://www.tramaartesanal.com.br";
-
+// Sitemap dinâmico — https://tramaartesanal.com.br/sitemap.xml
+const S = require("../lib/seo.js");
+const x = (s) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;");
 exports.handler = async () => {
   const hoje = new Date().toISOString().slice(0, 10);
-  let urls = [`<url><loc>${SITE}/</loc><lastmod>${hoje}</lastmod><changefreq>weekly</changefreq><priority>1.0</priority></url>`];
+  const urls = [`<url><loc>${S.SITE}/</loc><lastmod>${hoje}</lastmod><changefreq>weekly</changefreq><priority>1.0</priority></url>`];
   try {
-    const r = await fetch(`${SB_URL}/rest/v1/produtos?select=id&ativo=eq.true`, { headers: { apikey: SB_KEY, Authorization: `Bearer ${SB_KEY}` } });
-    if (r.ok) {
-      const rows = await r.json();
-      for (const p of rows) {
-        urls.push(`<url><loc>${SITE}/.netlify/functions/produto?id=${p.id}</loc><lastmod>${hoje}</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>`);
-      }
-    }
+    const lista = await S.carregarProdutos();
+    for (const c of S.CATEGORIAS) if (S.filtrar(lista, c).length)
+      urls.push(`<url><loc>${S.SITE}/categoria/${c.slug}</loc><lastmod>${hoje}</lastmod><changefreq>weekly</changefreq><priority>0.8</priority></url>`);
+    for (const p of lista)
+      urls.push(`<url><loc>${S.SITE}/produto/${p.slug}</loc><lastmod>${hoje}</lastmod><changefreq>monthly</changefreq><priority>0.7</priority>${p.fotos.slice(0, 5).map(f => `<image:image><image:loc>${x(f)}</image:loc><image:title>${x(p.nome)}</image:title></image:image>`).join("")}</url>`);
   } catch (e) { /* devolve ao menos a home */ }
-  return {
-    statusCode: 200,
-    headers: { "Content-Type": "application/xml; charset=utf-8", "Cache-Control": "public, max-age=3600" },
-    body: `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls.join("\n")}\n</urlset>`,
-  };
+  return { statusCode: 200, headers: { "Content-Type": "application/xml; charset=utf-8", "Cache-Control": "public, max-age=3600" },
+    body: `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">\n${urls.join("\n")}\n</urlset>` };
 };

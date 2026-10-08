@@ -604,7 +604,7 @@ section.sec{padding:110px 0;}
 .news2 input{flex:1;border:none;padding:12px 4px;font:300 .95rem 'Jost';background:none;outline:none;}
 .news2 button{font:400 .78rem 'Jost';letter-spacing:.2em;text-transform:uppercase;color:var(--taupe);padding:0 6px;}
 footer.rodape{background:var(--off);color:var(--ink-soft);padding:80px 0 28px;font-size:.9rem;}
-footer.rodape .grade{display:grid;grid-template-columns:1.4fr 1fr 1fr 1fr;gap:40px;}
+footer.rodape .grade{display:grid;grid-template-columns:1.4fr 1fr 1fr 1fr 1fr;gap:32px;}
 footer.rodape h4{font:400 .76rem 'Jost',sans-serif;letter-spacing:.22em;text-transform:uppercase;color:var(--ink);margin:0 0 18px;}
 footer.rodape li{margin-bottom:10px;}
 footer.rodape a:hover{color:var(--ink);}
@@ -852,6 +852,7 @@ footer.rodape .base{margin-top:56px;padding-top:22px;border-top:1px solid var(--
       <a href="#" target="_blank" rel="noopener" aria-label="Kwai"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M5 4v16M5 12l8-8M5 12l8 8"/></svg></a></div>
       </div>
       <div><h4>Navegação</h4><ul><li><a href="#colecoes">Coleções</a></li><li><a href="#categorias">Categorias</a></li><li><a href="#catalogo">Catálogo completo</a></li><li><a href="#projetos">Projetos</a></li></ul></div>
+      <div><h4>Categorias</h4><ul><li><a href="/categoria/sofas-para-area-externa">Sofás</a></li><li><a href="/categoria/poltronas-para-area-externa">Poltronas</a></li><li><a href="/categoria/mesas-para-area-externa">Mesas</a></li><li><a href="/categoria/cadeiras-para-area-externa">Cadeiras</a></li><li><a href="/categoria/chaises-e-espreguicadeiras">Chaises e espreguiçadeiras</a></li><li><a href="/categoria/banquetas-e-bistros">Banquetas</a></li><li><a href="/categoria/moveis-corda-nautica">Corda náutica</a></li><li><a href="/categoria/moveis-area-externa-maringa">Maringá-PR</a></li></ul></div>
       <div><h4>Atendimento</h4><ul><li>(44) 99910-4459</li><li><a href="mailto:sac@tramaartesanal.com.br">sac@tramaartesanal.com.br</a></li><li>Seg a Sáb, 8h–18h</li></ul></div>
       <div><h4>Compra</h4><ul><li>Pix com 20% de desconto</li><li>Frete grátis no PR acima de R$ 1.200</li><li>Garantia de até 2 anos</li><li><a href="#" onclick="abrirContaAtacado();return false;">Área do lojista (CNPJ)</a></li></ul></div>
     </div>
@@ -2207,6 +2208,9 @@ footer.rodape .base{margin-top:56px;padding-top:22px;border-top:1px solid var(--
     }
     renderHome();
     renderHeroCarousel();
+    // Link direto de busca: /?busca=CODIGO (usado pelas páginas de produto/categoria)
+    const _b = new URLSearchParams(location.search).get('busca');
+    if(_b && typeof liveSearch === 'function'){ const _i = document.getElementById('searchInput'); if(_i) _i.value = _b; liveSearch(_b); const _c = document.getElementById('catalogo'); if(_c) _c.scrollIntoView(); }
     // Link direto de teste: tramaartesanal.com.br/?teste=1 já coloca o produto teste no carrinho
     if(new URLSearchParams(location.search).has('teste') && CATALOG_GROUPS.some(g => g.code === 'TESTE:0001')){
       if(!cart.some(c => c.id === 'TESTE:0001::0')) addToCart('TESTE:0001::0'); else toggleCart(true);

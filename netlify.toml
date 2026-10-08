@@ -10,3 +10,21 @@
   to = "/.netlify/functions/sitemap"
   status = 200
   force = true
+
+[[redirects]]
+  from = "/produto/:slug"
+  to = "/.netlify/functions/produto?slug=:slug"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/categoria/:slug"
+  to = "/.netlify/functions/categoria?slug=:slug"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/feed-google.xml"
+  to = "/.netlify/functions/feed-google"
+  status = 200
+  force = true
