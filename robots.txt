@@ -1,0 +1,32 @@
+# Trama Artesanal — robots.txt
+User-agent: *
+Allow: /
+Disallow: /.netlify/functions/criar-pedido
+Disallow: /.netlify/functions/webhook-pagbank
+Disallow: /.netlify/functions/calcular-frete
+Disallow: /.netlify/functions/frete
+Disallow: /.netlify/functions/gerar-chave-publica-temp
+
+# Buscadores de IA — liberados para citar o site em respostas
+User-agent: GPTBot
+Allow: /
+User-agent: OAI-SearchBot
+Allow: /
+User-agent: ChatGPT-User
+Allow: /
+User-agent: ClaudeBot
+Allow: /
+User-agent: Claude-SearchBot
+Allow: /
+User-agent: PerplexityBot
+Allow: /
+User-agent: Google-Extended
+Allow: /
+User-agent: Applebot-Extended
+Allow: /
+User-agent: Bingbot
+Allow: /
+User-agent: meta-externalagent
+Allow: /
+
+Sitemap: https://www.tramaartesanal.com.br/sitemap.xml

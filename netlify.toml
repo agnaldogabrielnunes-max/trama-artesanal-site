@@ -4,3 +4,9 @@
 
 [build.environment]
   SECRETS_SCAN_OMIT_KEYS = "PAGBANK_TOKEN,PAGBANK_AMBIENTE"
+
+[[redirects]]
+  from = "/sitemap.xml"
+  to = "/.netlify/functions/sitemap"
+  status = 200
+  force = true
