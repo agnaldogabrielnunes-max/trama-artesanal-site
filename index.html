@@ -1804,6 +1804,9 @@ footer.rodape .base{margin-top:56px;padding-top:22px;border-top:1px solid var(--
     {slug:'centro-lateral', titulo:'Mesas de Centro'}, {slug:'puff', titulo:'Puffs & Bancos'},
   ];
   const CAPA_LINHA = {'Trama Artesanal':'CONJ_0059_2.webp'};
+  // Capa de cada linha = foto principal de um produto escolhido (codigo). Ambiente = foto cheia; demais = recorte com margem.
+  const CAPA_PROD = {'Trama Artesanal':'CONJ:0002','Calli Móveis':'CAL:0007','Lovato Móveis':'LOV:0263','Scaburi':'SCA:0211','Importados Trama':'IMP:0247'};
+  const CAPA_AMBIENTE = ['Trama Artesanal','Lovato Móveis'];
   function secaoDe(slug){ return SECTIONS.find(x => x.slug === slug); }
   function abasOrdenadas(){
     const set = [...new Set(CATALOG_GROUPS.map(abaDe))];
@@ -1823,8 +1826,9 @@ footer.rodape .base{margin-top:56px;padding-top:22px;border-top:1px solid var(--
     if(lg){
       lg.innerHTML = abasOrdenadas().map(aba => {
         const lista = CATALOG_GROUPS.filter(g => abaDe(g) === aba && SECTIONS.some(s => s.tipos.includes(g.tipo)));
-        const propria = CAPA_LINHA[aba];
-        const capa = propria ? SUPABASE_URL + '/storage/v1/object/public/produtos/' + propria
+        const gCapa = CAPA_PROD[aba] && CATALOG_GROUPS.find(g => g.code === CAPA_PROD[aba] && g.imagem);
+        const propria = gCapa ? CAPA_AMBIENTE.includes(aba) : CAPA_LINHA[aba];
+        const capa = gCapa ? gCapa.imagem : propria ? SUPABASE_URL + '/storage/v1/object/public/produtos/' + propria
           : (lista.find(g => g.imagem && ['Sofá','Poltrona'].includes(g.tipo)) || lista.find(g => g.imagem) || {}).imagem;
         return `<button class="colecao" onclick="irParaLinha('${aba.replace(/'/g,"\\'")}')"><div class="img${propria ? '' : ' recorte'}">${capa ? `<img src="${capa}" alt="${aba}" loading="lazy">` : ''}</div><h3>${aba}</h3><span>${lista.length} peças</span></button>`;
       }).join('');
