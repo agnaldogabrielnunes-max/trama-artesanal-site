@@ -3,7 +3,8 @@ const S = require("../lib/seo.js");
 
 exports.handler = async (event) => {
   try {
-    const slug = (event.queryStringParameters || {}).slug || "";
+    const m = String(event.path || "").match(/\/categoria\/([^/?#]+)/);
+    const slug = (event.queryStringParameters || {}).slug || (m && decodeURIComponent(m[1])) || "";
     const c = S.CATEGORIAS.find(x => x.slug === slug);
     if (!c) return { statusCode: 302, headers: { Location: S.SITE } };
     const lista = S.filtrar(await S.carregarProdutos(), c);

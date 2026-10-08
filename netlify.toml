@@ -12,14 +12,14 @@
   force = true
 
 [[redirects]]
-  from = "/produto/:slug"
-  to = "/.netlify/functions/produto?slug=:slug"
+  from = "/produto/*"
+  to = "/.netlify/functions/produto/:splat"
   status = 200
   force = true
 
 [[redirects]]
-  from = "/categoria/:slug"
-  to = "/.netlify/functions/categoria?slug=:slug"
+  from = "/categoria/*"
+  to = "/.netlify/functions/categoria/:splat"
   status = 200
   force = true
 

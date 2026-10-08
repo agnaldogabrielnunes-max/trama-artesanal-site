@@ -8,7 +8,9 @@ exports.handler = async (event) => {
     const lista = await S.carregarProdutos();
     let p;
     if (q.id) { p = lista.find(x => x.id === q.id); if (p) return { statusCode: 301, headers: { Location: `${S.SITE}/produto/${p.slug}` } }; }
-    if (q.slug) p = lista.find(x => x.slug === q.slug);
+    const m = String(event.path || '').match(/\/produto\/([^/?#]+)/);
+    const slug = q.slug || (m && decodeURIComponent(m[1]));
+    if (slug) p = lista.find(x => x.slug === slug);
     if (!p) return { statusCode: 302, headers: { Location: S.SITE } };
 
     const url = `${S.SITE}/produto/${p.slug}`;
