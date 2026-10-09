@@ -101,14 +101,14 @@ function previewDoc(d,tipo,docId){
    <div><label>Vencimento</label><input type="date" id="pd" value="${(d.vencimentos?.[0]?.vencimento)||d.data_vencimento||''}"></div>
    <div><label>Categoria (DRE)</label><select id="pc">${cats.map(c=>`<option value="${c.id}" ${c.nome===sug?'selected':''}>${esc(c.nome)}</option>`).join('')}</select></div></div>
    ${d.vencimentos?.length>1?`<p class="d">${d.vencimentos.length} parcelas na nota: ${d.vencimentos.map(x=>x.vencimento+' '+R(x.valor)).join(' · ')} — serão lançadas separadas.</p>`:''}
-   ${d.data_pagamento?`<p class="d">Comprovante com pagamento em ${d.data_pagamento}: será lançado como <b>pago</b>.</p>`:''}
+   ${d.data_pagamento?`<p class="d">Comprovante com pagamento em ${d.data_pagamento}: será lançado como <b>quitado</b>.</p>`:''}
    ${itens.length?`<h4 style="margin-top:12px">Produtos da nota</h4>${tbl(['Descrição','Un','Qtd','Valor unit.','Total'],itens.map(i=>[esc(i.descricao),esc(i.unidade||''),i.quantidade,R(i.valor_unitario),R(i.valor_total)]))}<label style="display:flex;gap:8px;align-items:center;margin-top:8px"><input type="checkbox" id="pest" checked style="width:auto"> Dar entrada destes produtos no estoque</label>`:''}
    <p id="perr" style="color:#ff8a6b"></p><button class="btn" id="plan">Lançar</button>`;
   $('#plan').onclick=async()=>{
     const cat=cats.find(c=>c.id===$('#pc').value);const forn=$('#pf').value.trim();const desc=`${forn||'Documento'}${$('#pn').value?' NF '+$('#pn').value:''}`;
     const parcelas=d.vencimentos?.length>1?d.vencimentos.map(x=>({v:x.valor,venc:x.vencimento})):[{v:num($('#pv').value),venc:$('#pd').value||null}];
     const pago=!!d.data_pagamento;
-    const regs=parcelas.map((p,i)=>({empresa_id:S.emp,tipo:'pagar',descricao:desc+(parcelas.length>1?` (${i+1}/${parcelas.length})`:''),categoria:cat?.nome,grupo:cat?.grupo,categoria_id:cat?.id,valor:p.v,data:$('#pe').value,vencimento:p.venc,status:pago?'pago':'pendente',beneficiario:forn,observacoes:'Lançado pelo leitor de documentos',parcela_num:i+1,parcelas_total:parcelas.length}));
+    const regs=parcelas.map((p,i)=>({empresa_id:S.emp,tipo:'pagar',descricao:desc+(parcelas.length>1?` (${i+1}/${parcelas.length})`:''),categoria:cat?.nome,grupo:cat?.grupo,categoria_id:cat?.id,valor:p.v,data:$('#pe').value,vencimento:p.venc,status:pago?'quitado':'aberto',beneficiario:forn,observacoes:'Lançado pelo leitor de documentos',parcela_num:i+1,parcelas_total:parcelas.length}));
     const {data:ls,error}=await sb.from('erp_lancamentos').insert(regs).select('id');
     if(error){$('#perr').textContent='Erro ao lançar: '+error.message;return}
     if(itens.length&&document.getElementById('pest')?.checked){
@@ -141,7 +141,7 @@ function lerExtrato(txt){
 PAGES.conciliacao=async v=>{
   if(pedirEmpresa(v))return;
   const [ext,lan,cats]=await Promise.all([q('extrato_bancario','id,data,descricao,valor,conciliado,lancamento_id',b=>b.order('data',{ascending:false}).limit(200)),
-    q('erp_lancamentos','id,tipo,descricao,valor,vencimento,data,status,beneficiario',b=>b.not('status','in','(pago,cancelado)').limit(500)),q('financeiro_categorias','id,nome,grupo,tipo',b=>b.eq('ativo',true).order('nome'))]);
+    q('erp_lancamentos','id,tipo,descricao,valor,vencimento,data,status,beneficiario',b=>b.neq('status','quitado').limit(500)),q('financeiro_categorias','id,nome,grupo,tipo',b=>b.eq('ativo',true).order('nome'))]);
   const pend=ext.filter(e=>!e.conciliado);
   const sugest=pend.map(e=>{const alvo=e.valor<0?'pagar':'receber';const dt=new Date(e.data).getTime();
     const l=lan.filter(x=>x.tipo===alvo&&Math.abs(Number(x.valor)-Math.abs(e.valor))<0.01).sort((a,b)=>Math.abs(new Date(a.vencimento||a.data)-dt)-Math.abs(new Date(b.vencimento||b.data)-dt))[0];
@@ -153,9 +153,9 @@ PAGES.conciliacao=async v=>{
     const {error}=await sb.from('extrato_bancario').upsert(L.map(x=>({...x,empresa_id:S.emp})),{onConflict:'empresa_id,fitid',ignoreDuplicates:true});
     $('#xm').textContent=error?'Erro: '+error.message:L.length+' movimentos lidos.';if(!error)setTimeout(render,800)};
   v.onclick=async ev=>{const b=ev.target.closest('.xok,.xnv');if(!b)return;const {e,l}=sugest[+b.dataset.i];
-    if(b.classList.contains('xok')){await sb.from('erp_lancamentos').update({status:'pago'}).eq('id',l.id);await sb.from('extrato_bancario').update({conciliado:true,lancamento_id:l.id}).eq('id',e.id);render()}
+    if(b.classList.contains('xok')){await sb.from('erp_lancamentos').update({status:'quitado'}).eq('id',l.id);await sb.from('extrato_bancario').update({conciliado:true,lancamento_id:l.id}).eq('id',e.id);render()}
     else{const cid=v.querySelector(`.xc[data-i="${b.dataset.i}"]`).value;if(!cid)return alert('Escolha a categoria.');const c=cats.find(x=>x.id===cid);
-      const {data:n,error}=await sb.from('erp_lancamentos').insert({empresa_id:S.emp,tipo:e.valor<0?'pagar':'receber',descricao:e.descricao,categoria:c.nome,grupo:c.grupo,categoria_id:c.id,valor:Math.abs(e.valor),data:e.data,vencimento:e.data,status:'pago',observacoes:'Lançado pela conciliação bancária'}).select('id').single();
+      const {data:n,error}=await sb.from('erp_lancamentos').insert({empresa_id:S.emp,tipo:e.valor<0?'pagar':'receber',descricao:e.descricao,categoria:c.nome,grupo:c.grupo,categoria_id:c.id,valor:Math.abs(e.valor),data:e.data,vencimento:e.data,status:'quitado',observacoes:'Lançado pela conciliação bancária'}).select('id').single();
       if(error)return alert(error.message);await sb.from('extrato_bancario').update({conciliado:true,lancamento_id:n.id}).eq('id',e.id);render()}};
 };
 PAGES.conciliacao.meta=['Conciliação bancária','Extrato do banco × contas lançadas'];
@@ -164,11 +164,13 @@ PAGES.conciliacao.meta=['Conciliação bancária','Extrato do banco × contas la
 PAGES.lotes=async v=>{
   if(pedirEmpresa(v))return;
   const {data:papel}=await sb.rpc('erp_papel');const adm=papel==='admin';
-  const [lan,lotes,cods,aud]=await Promise.all([
-    q('erp_lancamentos','id,descricao,beneficiario,valor,vencimento,status',b=>b.eq('tipo','pagar').not('status','in','(pago,cancelado,em_pagamento)').order('vencimento').limit(200)),
+  const [lan0,lotes,cods,aud,emLote]=await Promise.all([
+    q('erp_lancamentos','id,descricao,beneficiario,valor,vencimento,status',b=>b.eq('tipo','pagar').eq('status','aberto').order('vencimento').limit(200)),
     q('lotes_pagamento','id,descricao,total,status,criado_por,criado_em,liberado_por,liberado_em',b=>b.order('criado_em',{ascending:false}).limit(20)),
     adm?q('lote_codigos','lote_id,codigo'):Promise.resolve([]),
-    adm?q('auditoria','acao,usuario,criado_em,detalhe',b=>b.order('criado_em',{ascending:false}).limit(15)):Promise.resolve([])]);
+    adm?q('auditoria','acao,usuario,criado_em,detalhe',b=>b.order('criado_em',{ascending:false}).limit(15)):Promise.resolve([]),
+    q('lote_itens','lancamento_id')]);
+  const usados=new Set(emLote.map(x=>x.lancamento_id));const lan=lan0.filter(l=>!usados.has(l.id));
   v.innerHTML=`<div class="card"><h3>Contas a pagar em aberto</h3><p class="d">Marque as contas, crie o lote e o administrador libera com o código. Quem cria o lote não consegue liberar.</p>
    ${lan.length?`<div class="tw"><table><thead><tr><th></th><th>Beneficiário</th><th>Descrição</th><th>Vence</th><th>Valor</th></tr></thead><tbody>${lan.map(l=>`<tr><td><input type="checkbox" class="lk" value="${l.id}" style="width:auto"></td><td>${esc(l.beneficiario||'')}</td><td>${esc(l.descricao)}</td><td>${D(l.vencimento)}</td><td>${R(l.valor)}</td></tr>`).join('')}</tbody></table></div><input id="ld" placeholder="Descrição do lote (ex.: fornecedores semana 41)" style="margin-top:10px"><button class="btn" id="lgo" style="margin-top:8px">Criar lote para liberação</button> <span id="lm" class="d"></span>`:empty('Nenhuma conta a pagar em aberto.')}</div>
    <div class="card" style="margin-top:16px"><h3>Lotes</h3>${lotes.length?lotes.map(l=>{const c=cods.find(x=>x.lote_id===l.id);return `<div class="kc" style="margin-bottom:8px"><b>${esc(l.descricao||'Lote')} · ${R(l.total)}</b> ${stPill(l.status==='liberado'?'liberado':'aguardando')}<span>Criado por ${esc(l.criado_por||'')} em ${DT(l.criado_em)}${l.liberado_em?` · liberado por ${esc(l.liberado_por)} em ${DT(l.liberado_em)}`:''}</span>
