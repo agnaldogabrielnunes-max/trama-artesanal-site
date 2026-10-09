@@ -1,17 +1,34 @@
 /* LAR · módulos financeiros: DRE (receita do bolo), documentos (leitor), conciliação, lotes de pagamento */
-const GRUPOS=[['receita','Receita bruta'],['deducoes','Deduções da receita'],['custo','Custo do produto (CMV)'],['pessoal','Pessoal'],['administrativas','Despesas administrativas'],['comerciais','Comerciais e marketing'],['logistica','Logística'],['financeiras','Despesas financeiras'],['impostos_lucro','Impostos sobre o lucro'],['fora_dre','Fora do DRE (caixa)']];
+const GRUPOS=[['sem_categoria','Sem categoria (classificar no Financeiro)'],['receita','Receita bruta'],['deducoes','Deduções da receita'],['custo','Custo do produto (CMV)'],['pessoal','Pessoal'],['administrativas','Despesas administrativas'],['comerciais','Comerciais e marketing'],['logistica','Logística'],['financeiras','Despesas financeiras'],['impostos_lucro','Impostos sobre o lucro'],['fora_dre','Fora do DRE (caixa)']];
 const pedirEmpresa=v=>{if(S.emp==='all'){v.innerHTML=empty('Escolha uma empresa no topo da tela para abrir este módulo.');return true}return false};
 const mesISO=()=>{S.dreMes=S.dreMes||new Date().toISOString().slice(0,7);return S.dreMes+'-01'};
 const num=s=>{s=String(s??'').trim();if(!s)return 0;if(s.includes(',')){s=s.replace(/[R$\s.]/g,'').replace(',','.')}return Number(s)||0};
 const pct=(a,b)=>b?((a/b)*100).toFixed(1).replace('.',',')+'%':'—';
 
+const mesesEntre=(a,b)=>(b.getFullYear()-a.getFullYear())*12+(b.getMonth()-a.getMonth());
+function bemCalc(b,ref){const m=Math.max(0,mesesEntre(new Date(b.data_aquisicao+'T12:00:00'),ref));const taxa=Number(b.taxa_depreciacao_anual)/100,v=Number(b.valor_inicial);
+  const dep=Math.min(v,v*taxa*m/12);const mensal=(m>=1&&dep<v)?Math.min(v*taxa/12,v-(dep-v*taxa/12)):0;return {atual:v-dep,dep,mensal,m}}
+async function patrCalc(){
+  const ref=new Date(mesISO()+'T12:00:00');ref.setMonth(ref.getMonth()+1);ref.setDate(0); // fim do mês selecionado
+  const [contas,bens,est,rec]=await Promise.all([q('contas_bancarias','id,banco,conta,saldo_atual',b=>b.eq('ativo',true).order('banco')),q('patrimonio_bens','id,descricao,categoria,data_aquisicao,valor_inicial,taxa_depreciacao_anual',b=>b.eq('ativo',true).order('data_aquisicao')),
+    q('estoque_itens','id,descricao,unidade,quantidade,custo_medio,preco_venda',b=>b.order('descricao')),q('erp_lancamentos','valor,forma_pagamento,vencimento',b=>b.eq('tipo','receber').eq('status','aberto'))]);
+  const banco=contas.reduce((a,c)=>a+Number(c.saldo_atual),0);
+  const receber={boleto:0,cartao:0,cheque:0,outros:0};rec.forEach(r=>{const f=String(r.forma_pagamento||'').toLowerCase();const k=/boleto/.test(f)?'boleto':/cart/.test(f)?'cartao':/cheque/.test(f)?'cheque':'outros';receber[k]+=Number(r.valor)});
+  const aReceber=Object.values(receber).reduce((a,x)=>a+x,0);
+  const estCusto=est.reduce((a,i)=>a+Number(i.quantidade)*Number(i.custo_medio),0),estVenda=est.reduce((a,i)=>a+Number(i.quantidade)*Number(i.preco_venda),0);
+  const estPrev=est.filter(i=>Number(i.preco_venda)>0).reduce((a,i)=>a+Number(i.quantidade)*(Number(i.preco_venda)-Number(i.custo_medio)),0);
+  const bensC=bens.map(b=>({...b,...bemCalc(b,ref)}));
+  const imob=bensC.reduce((a,b)=>a+b.atual,0),imobInicial=bensC.reduce((a,b)=>a+Number(b.valor_inicial),0),depMes=bensC.reduce((a,b)=>a+b.mensal,0);
+  return {contas,bens:bensC,est,banco,receber,aReceber,estCusto,estVenda,estPrev,imob,imobInicial,depMes,total:banco+aReceber+estCusto+imob};
+}
 async function dreCalc(){
   const {data,error}=await sb.rpc('dre_mes',{p_empresa:S.emp,p_mes:mesISO()});
   const rows=(error?[]:data||[]).map(r=>({...r,manual:Number(r.manual),lancado:Number(r.lancado),total:Number(r.manual)+Number(r.lancado)}));
   const g=k=>rows.filter(r=>r.grupo===k).reduce((a,r)=>a+r.total,0);
-  const RB=g('receita'),DED=g('deducoes'),CMV=g('custo'),PES=g('pessoal'),ADM=g('administrativas'),COM=g('comerciais'),LOG=g('logistica'),FIN=g('financeiras'),IR=g('impostos_lucro');
-  const RL=RB-DED,LB=RL-CMV,DOP=PES+ADM+COM+LOG,RO=LB-DOP,LAIR=RO-FIN,LL=LAIR-IR;
-  return {rows,RB,DED,RL,CMV,LB,PES,ADM,COM,LOG,DOP,RO,FIN,LAIR,IR,LL};
+  const RB=g('receita'),DED=g('deducoes'),CMV=g('custo'),PES=g('pessoal'),ADM=g('administrativas'),COM=g('comerciais'),LOG=g('logistica'),FIN=g('financeiras'),IR=g('impostos_lucro'),SEMC=g('sem_categoria');
+  const P=await patrCalc();const DEP=P.depMes;
+  const RL=RB-DED,LB=RL-CMV,DOP=PES+ADM+COM+LOG+SEMC+DEP,RO=LB-DOP,LAIR=RO-FIN,LL=LAIR-IR;
+  return {rows,RB,DED,RL,CMV,LB,PES,ADM,COM,LOG,SEMC,DEP,DOP,RO,FIN,LAIR,IR,LL,P};
 }
 PAGES.dre=async v=>{
   if(pedirEmpresa(v))return;
@@ -21,18 +38,20 @@ PAGES.dre=async v=>{
   const c=await dreCalc();
   const {data:cfg}=await sb.from('dre_config').select('margem_desejada').eq('empresa_id',S.emp).maybeSingle();
   const {data:fech}=await sb.from('dre_fechamentos').select('mes,resumo,fechado_por,criado_em,dados').eq('empresa_id',S.emp).order('mes',{ascending:false}).limit(12);
-  const tabs=[['bolo','Receita do bolo'],['dre','DRE do mês'],['margem','Margem e preço'],['fech','Fechamentos']];
+  const tabs=[['bolo','Receita do bolo'],['dre','DRE do mês'],['patr','Patrimônio e caixa'],['margem','Margem e preço'],['fech','Fechamentos']];
   const linha=(n,val,opt={})=>`<tr style="${opt.b?'font-weight:700;background:var(--panel2)':''}"><td>${opt.i?'&nbsp;&nbsp;&nbsp;':''}${n}</td><td style="text-align:right">${R(val)}</td><td style="text-align:right;color:var(--mut)">${pct(val,c.RB)}</td></tr>`;
   let corpo='';
   if(S.dreTab==='bolo'){
-    corpo=`<p class="d" style="margin-bottom:12px">Preencha o que a empresa teve em cada linha neste mês. O que já foi lançado no Financeiro (com categoria) soma automaticamente — o campo abaixo é para o que ainda não está lançado. Salva ao sair do campo.</p>`+GRUPOS.map(([k,nm])=>{const L=c.rows.filter(r=>r.grupo===k);return `<div class="card" style="margin-bottom:12px"><h3>${nm} <span style="float:right">${R(L.reduce((a,r)=>a+r.total,0))}</span></h3><div class="tw"><table><thead><tr><th>Linha</th><th style="width:150px">Valor do mês (R$)</th><th style="width:120px;text-align:right">Já lançado</th></tr></thead><tbody>${L.map(r=>`<tr><td>${esc(r.categoria)}</td><td><input class="dv" data-c="${r.categoria_id}" value="${r.manual?String(r.manual).replace('.',','):''}" placeholder="0,00" inputmode="decimal"></td><td style="text-align:right;color:var(--mut)">${r.lancado?R(r.lancado):'—'}</td></tr>`).join('')}</tbody></table></div></div>`}).join('');
+    corpo=`<p class="d" style="margin-bottom:12px">Preencha o que a empresa teve em cada linha neste mês. O que já foi lançado no Financeiro (com categoria) soma automaticamente — o campo abaixo é para o que ainda não está lançado. Salva ao sair do campo.</p>`+GRUPOS.map(([k,nm])=>{const L=c.rows.filter(r=>r.grupo===k);if(k==='sem_categoria'&&!L.length)return '';return `<div class="card" style="margin-bottom:12px"><h3>${nm} <span style="float:right">${R(L.reduce((a,r)=>a+r.total,0))}</span></h3><div class="tw"><table><thead><tr><th>Linha</th><th style="width:150px">Valor do mês (R$)</th><th style="width:120px;text-align:right">Já lançado</th></tr></thead><tbody>${L.map(r=>`<tr><td>${esc(r.categoria)}</td><td>${r.categoria_id?`<input class="dv" data-c="${r.categoria_id}" value="${r.manual?String(r.manual).replace('.',','):''}" placeholder="0,00" inputmode="decimal">`:'<span class="d">abra o Financeiro e escolha a categoria</span>'}</td><td style="text-align:right;color:var(--mut)">${r.lancado?R(r.lancado):'—'}</td></tr>`).join('')}</tbody></table></div></div>`}).join('');
   }else if(S.dreTab==='dre'){
     corpo=`<div class="card"><table><thead><tr><th>DRE · ${S.dreMes}</th><th style="text-align:right">Valor</th><th style="text-align:right">% da receita</th></tr></thead><tbody>
     ${linha('Receita bruta',c.RB,{b:1})}${linha('(−) Deduções (impostos s/ venda, taxas, marketplace)',c.DED,{i:1})}${linha('Receita líquida',c.RL,{b:1})}
     ${linha('(−) Custo do produto (CMV)',c.CMV,{i:1})}${linha('Lucro bruto',c.LB,{b:1})}
-    ${linha('(−) Pessoal',c.PES,{i:1})}${linha('(−) Administrativas',c.ADM,{i:1})}${linha('(−) Comerciais e marketing',c.COM,{i:1})}${linha('(−) Logística',c.LOG,{i:1})}
+    ${linha('(−) Pessoal',c.PES,{i:1})}${linha('(−) Administrativas',c.ADM,{i:1})}${linha('(−) Comerciais e marketing',c.COM,{i:1})}${linha('(−) Logística',c.LOG,{i:1})}${c.SEMC?linha('(−) Despesas ainda sem categoria',c.SEMC,{i:1}):''}${linha('(−) Depreciação do patrimônio (não é saída de caixa)',c.DEP,{i:1})}
     ${linha('Resultado operacional',c.RO,{b:1})}${linha('(−) Despesas financeiras',c.FIN,{i:1})}${linha('Resultado antes dos impostos s/ lucro',c.LAIR,{b:1})}${linha('(−) Impostos sobre o lucro',c.IR,{i:1})}${linha('LUCRO LÍQUIDO',c.LL,{b:1})}
-    </tbody></table></div><div class="card" style="margin-top:12px"><canvas id="dc" height="110"></canvas></div>`;
+    </tbody></table></div>${posicao(c.P)}<div class="card" style="margin-top:12px"><canvas id="dc" height="110"></canvas></div>`;
+  }else if(S.dreTab==='patr'){
+    corpo=patrEditor(c.P);
   }else if(S.dreTab==='margem'){
     const dedP=c.RB?c.DED/c.RB*100:0,dopP=c.RB?c.DOP/c.RB*100:0,finP=c.RB?c.FIN/c.RB*100:0,irP=c.RB?c.IR/c.RB*100:0;
     corpo=`<div class="card" style="max-width:640px"><h3>Quanto cobrar para ganhar a margem que você quer</h3>
@@ -50,6 +69,7 @@ PAGES.dre=async v=>{
     const val=num(i.value);const {error}=await sb.from('dre_valores').upsert({empresa_id:S.emp,mes:mesISO(),categoria_id:i.dataset.c,valor:val,atualizado_em:new Date().toISOString()},{onConflict:'empresa_id,mes,categoria_id'});
     i.style.outline=error?'2px solid #ff6b6b':'2px solid #3FA7BA';setTimeout(()=>i.style.outline='',900)});
   if(S.dreTab==='dre')chart('dc',{type:'bar',data:{labels:['Receita','Deduções','CMV','Despesas op.','Financeiras','Lucro líquido'],datasets:[{data:[c.RB,c.DED,c.CMV,c.DOP,c.FIN,c.LL],backgroundColor:['#3FA7BA','#8FB0BD','#8FB0BD','#8FB0BD','#8FB0BD','#F57C20'],borderRadius:6}]},options:{plugins:{legend:{display:false}}}});
+  if(S.dreTab==='patr')patrBind(v);
   if(S.dreTab==='margem')$('#mgo').onclick=async()=>{
     const custo=num($('#mc').value),m=num($('#mm').value),s=num($('#md').value)+num($('#mo').value)+num($('#mf').value)+num($('#mi').value);
     await sb.from('dre_config').upsert({empresa_id:S.emp,margem_desejada:m});
@@ -58,7 +78,7 @@ PAGES.dre=async v=>{
   };
   if(S.dreTab==='fech')$('#fechar').onclick=async()=>{
     const resumo=`Receita ${R(c.RB)} · lucro líquido ${R(c.LL)} (${pct(c.LL,c.RB)}) · despesas operacionais ${pct(c.DOP,c.RB)} da receita.`;
-    const {error}=await sb.from('dre_fechamentos').upsert({empresa_id:S.emp,mes:mesISO(),dados:{RB:c.RB,DED:c.DED,CMV:c.CMV,DOP:c.DOP,FIN:c.FIN,IR:c.IR,LL:c.LL},resumo,fechado_por:S.user.email},{onConflict:'empresa_id,mes'});
+    const {error}=await sb.from('dre_fechamentos').upsert({empresa_id:S.emp,mes:mesISO(),dados:{RB:c.RB,DED:c.DED,CMV:c.CMV,DOP:c.DOP,FIN:c.FIN,IR:c.IR,LL:c.LL,patrimonio:{banco:c.P.banco,aReceber:c.P.aReceber,estoqueCusto:c.P.estCusto,imobilizado:c.P.imob,total:c.P.total}},resumo,fechado_por:S.user.email},{onConflict:'empresa_id,mes'});
     if(error)alert('Erro: '+error.message);else render();
   };
 };
@@ -184,3 +204,50 @@ PAGES.lotes=async v=>{
     if(error||!r?.ok)alert(error?.message||r.erro);else render()};
 };
 PAGES.lotes.meta=['Pagamento em lote','Criação pelo financeiro · liberação só pelo administrador, com código e registro'];
+
+function posicao(P){
+  const L=(n,v,o={})=>`<tr style="${o.b?'font-weight:700;background:var(--panel2)':''}"><td>${o.i?'&nbsp;&nbsp;&nbsp;':''}${n}</td><td style="text-align:right">${R(v)}</td></tr>`;
+  return `<div class="card" style="margin-top:12px"><table><thead><tr><th>Posição patrimonial e caixa (fim do mês)</th><th style="text-align:right">Valor</th></tr></thead><tbody>
+  ${L('Dinheiro nos bancos',P.banco,{b:1})}${P.contas.map(c=>L(esc(c.banco+(c.conta?' · '+c.conta:'')),c.saldo_atual,{i:1})).join('')}
+  ${L('A receber',P.aReceber,{b:1})}${L('Boletos',P.receber.boleto,{i:1})}${L('Cartão',P.receber.cartao,{i:1})}${L('Cheques',P.receber.cheque,{i:1})}${P.receber.outros?L('Outros',P.receber.outros,{i:1}):''}
+  ${L('Estoque (a custo)',P.estCusto,{b:1})}
+  ${L('Imobilizado (valor atual)',P.imob,{b:1})}${P.bens.map(b=>L(esc(b.descricao)+' <span class="d">· comprado por '+R(b.valor_inicial)+'</span>',b.atual,{i:1})).join('')}
+  ${L('TOTAL DO PATRIMÔNIO',P.total,{b:1})}</tbody></table>
+  <p class="d" style="margin-top:8px">Estoque a preço de venda: ${R(P.estVenda)} · <b>previsão de lucro do estoque: ${R(P.estPrev)}</b> (informativa, não entra no total nem no resultado). Imobilizado: ${R(P.imobInicial)} investidos, ${R(P.imobInicial-P.imob)} de desvalorização acumulada.</p></div>`;
+}
+function patrEditor(P){
+  return `<div class="grid g2">
+  <div class="card"><h3>Contas bancárias</h3>${tbl(['Banco / conta','Saldo atual (R$)'],P.contas.map(c=>[esc(c.banco+(c.conta?' · '+c.conta:'')),`<input class="cb" data-id="${c.id}" value="${String(c.saldo_atual).replace('.',',')}" inputmode="decimal">`]))}
+   <div style="display:flex;gap:6px;margin-top:10px"><input id="nb" placeholder="Banco"><input id="nc" placeholder="Conta (opcional)"><input id="ns" placeholder="Saldo" inputmode="decimal" style="max-width:110px"><button class="btn sm" id="nbo">Adicionar</button></div></div>
+  <div class="card"><h3>A receber (vem das contas a receber em aberto)</h3>${tbl(['Forma','Valor'],[['Boletos',R(P.receber.boleto)],['Cartão',R(P.receber.cartao)],['Cheques',R(P.receber.cheque)],['Outros',R(P.receber.outros)],['<b>Total</b>','<b>'+R(P.aReceber)+'</b>']])}<p class="d">Para separar certo, informe a forma de pagamento (boleto, cartão, cheque) ao lançar a conta a receber.</p></div></div>
+  <div class="card" style="margin-top:12px"><h3>Bens do patrimônio (imobilizado) — perdem valor por ano</h3>${tbl(['Bem','Comprado em','Valor pago','% ao ano','Valor hoje'],P.bens.map(b=>[esc(b.descricao),b.data_aquisicao.split('-').reverse().join('/'),R(b.valor_inicial),b.taxa_depreciacao_anual+'%',`<b>${R(b.atual)}</b>`]))}
+   <div class="grid g4" style="margin-top:10px"><input id="bd" placeholder="Descrição (ex.: Computador)"><input id="bt" type="date"><input id="bv" placeholder="Valor pago" inputmode="decimal"><input id="bx" value="10" placeholder="% ao ano"></div><button class="btn sm" id="bgo" style="margin-top:8px">Adicionar bem</button><p class="d" style="margin-top:6px">Exemplo: computador de R$ 1.000 comprado em 2026 vale R$ 900 em 2027 (10% do valor pago por ano).</p></div>
+  <div class="card" style="margin-top:12px"><h3>Estoque — custo e previsão de lucro</h3>${tbl(['Item','Qtd','Custo médio','Preço de venda','Custo total','Lucro previsto'],P.est.map(i=>[esc(i.descricao),i.quantidade,R(i.custo_medio),`<input class="ep" data-id="${i.id}" value="${Number(i.preco_venda)?String(i.preco_venda).replace('.',','):''}" placeholder="0,00" inputmode="decimal" style="max-width:100px">`,R(i.quantidade*i.custo_medio),Number(i.preco_venda)?R(i.quantidade*(i.preco_venda-i.custo_medio)):'—']))}
+   <p class="d">Total a custo: <b>${R(P.estCusto)}</b> · previsão de lucro: <b>${R(P.estPrev)}</b>. Só o custo entra no total do patrimônio. O estoque chega pelo leitor de notas.</p></div>`;
+}
+function patrBind(v){
+  v.querySelectorAll('.cb').forEach(i=>i.onchange=async()=>{await sb.from('contas_bancarias').update({saldo_atual:num(i.value),atualizado_em:new Date().toISOString()}).eq('id',i.dataset.id);render()});
+  v.querySelectorAll('.ep').forEach(i=>i.onchange=async()=>{await sb.from('estoque_itens').update({preco_venda:num(i.value)}).eq('id',i.dataset.id);render()});
+  const nbo=$('#nbo');if(nbo)nbo.onclick=async()=>{if(!$('#nb').value.trim())return;await sb.from('contas_bancarias').insert({empresa_id:S.emp,banco:$('#nb').value.trim(),conta:$('#nc').value.trim()||null,saldo_atual:num($('#ns').value)});render()};
+  const bgo=$('#bgo');if(bgo)bgo.onclick=async()=>{if(!$('#bd').value.trim()||!$('#bt').value||!num($('#bv').value))return alert('Informe descrição, data e valor pago.');
+    await sb.from('patrimonio_bens').insert({empresa_id:S.emp,descricao:$('#bd').value.trim(),data_aquisicao:$('#bt').value,valor_inicial:num($('#bv').value),taxa_depreciacao_anual:num($('#bx').value)||10});render()};
+}
+
+/* ---------- regras do fluxo por empresa ---------- */
+const OPC_FORMAS={avista:'À vista',pix:'Pix',cartao:'Cartão',boleto:'Boleto',cheque:'Cheque'};
+PAGES.regras=async v=>{
+  if(pedirEmpresa(v))return;
+  const {data:r}=await sb.from('empresa_fluxo_regras').select('*').eq('empresa_id',S.emp).maybeSingle();
+  if(!r){v.innerHTML=empty('Esta empresa ainda não tem regras cadastradas.');return}
+  const {data:papel}=await sb.rpc('erp_papel');const adm=papel==='admin';
+  const chk=(id,l,on)=>`<label style="display:flex;gap:8px;align-items:center;margin:6px 0"><input type="checkbox" id="${id}" ${on?'checked':''} ${adm?'':'disabled'} style="width:auto"> ${l}</label>`;
+  v.innerHTML=`<div class="card" style="max-width:640px"><h3>Regras do fluxo de pedidos</h3><p class="d">Cada empresa define as próprias regras. Os agentes e o sistema seguem o que está marcado aqui.${adm?'':' (somente o administrador altera)'}</p>
+   <h4>Formas de pagamento aceitas</h4>${Object.entries(OPC_FORMAS).map(([k,l])=>chk('rf_'+k,l,(r.formas_pagamento||[]).includes(k))).join('')}
+   <h4 style="margin-top:12px">Meios de entrega permitidos</h4>${Object.entries(MEIOS).map(([k,l])=>chk('rm_'+k,l,(r.meios_entrega||[]).includes(k))).join('')}
+   <h4 style="margin-top:12px">Exigências</h4>${chk('rx_nf','Número da nota fiscal antes de ir para o transporte',r.exige_nf_para_transporte)}${chk('rx_cp','Comprovante de entrega (nota assinada ou foto) para dar baixa',r.exige_comprovante_entrega)}${chk('rx_fv','Foto do veículo na baixa',r.exige_foto_veiculo)}${chk('rx_ns','Nota assinada pelo cliente',r.exige_nota_assinada)}
+   ${adm?'<button class="btn" id="rsave" style="margin-top:14px">Salvar regras</button> <span id="rmsg" class="d"></span>':''}</div>`;
+  if(adm)$('#rsave').onclick=async()=>{
+    const {error}=await sb.from('empresa_fluxo_regras').update({formas_pagamento:Object.keys(OPC_FORMAS).filter(k=>$('#rf_'+k).checked),meios_entrega:Object.keys(MEIOS).filter(k=>$('#rm_'+k).checked),exige_nf_para_transporte:$('#rx_nf').checked,exige_comprovante_entrega:$('#rx_cp').checked,exige_foto_veiculo:$('#rx_fv').checked,exige_nota_assinada:$('#rx_ns').checked}).eq('empresa_id',S.emp);
+    $('#rmsg').textContent=error?'Erro: '+error.message:'Regras salvas.'};
+};
+PAGES.regras.meta=['Regras por empresa','Formas de pagamento, meios de entrega e exigências do fluxo'];

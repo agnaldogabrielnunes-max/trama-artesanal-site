@@ -215,7 +215,7 @@ const NAV=[
  ['Comercial',[['vendas','◈','Vendas e pedidos'],['marketplaces','⌂','Marketplaces'],['fluxo','⇄','Fluxo do pedido'],['producao','▤','Produção'],['crm','☺','Clientes e CRM'],['leads','◎','Leads B2B']]],
  ['Financeiro',[['financeiro','$','Financeiro'],['dre','%','DRE e receita do bolo'],['documentos','▤','Documentos e leitor'],['conciliacao','⇄','Conciliação bancária'],['lotes','✔','Pagamento em lote'],['notas','▧','Notas fiscais'],['fornecedores','⚙','Fornecedores']]],
  ['Marketing',[['calendario','▣','Calendário de conteúdo'],['aprovacao','✓','Aprovação'],['feed','◫','Preview do feed'],['redes','☍','Redes conectadas']]],
- ['Inteligência',[['agenda','▥','Agenda'],['ia','✧','IA LAR'],['consultor','✦','Consultor IA'],['motivador','☀','Motivador'],['agentes','✦','Agentes IA'],['planos','◆','Planos e preços'],['equipe','☻','Empresas e equipe']]]
+ ['Inteligência',[['agenda','▥','Agenda'],['ia','✧','IA LAR'],['consultor','✦','Consultor IA'],['motivador','☀','Motivador'],['agentes','✦','Agentes IA'],['planos','◆','Planos e preços'],['regras','⚑','Regras por empresa'],['equipe','☻','Empresas e equipe']]]
 ];
 function buildNav(){
   $('#nav').innerHTML=NAV.map(([g,items])=>`<div class="grp">${g}</div>`+items.map(([id,ic,l])=>`<button data-p="${id}"><span class="ic">${ic}</span>${l}</button>`).join('')).join('');
