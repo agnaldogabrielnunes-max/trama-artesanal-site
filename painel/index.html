@@ -154,7 +154,7 @@ td{padding:11px 10px;border-top:1px solid var(--line);font-size:13px;vertical-al
 
 <script>
 const SB_URL='https://qgunpfgdsqqgfkimvwhg.supabase.co';
-const SB_KEY='sb_publishable_zf7UMVosztpLCHpAYRvoHA_WX9_X0wy';
+const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFndW5wZmdkc3FxZ2ZraW12d2hnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIzMjQyMjIsImV4cCI6MjA5NzkwMDIyMn0.LUbnqiP1DPS1GEPrX5KYjHNYQeL_6V0bVgCzlEg49-Q';
 const sb=supabase.createClient(SB_URL,SB_KEY);
 
 /* ---------- helpers ---------- */
@@ -184,9 +184,9 @@ $('#mx').onclick=()=>$('#modal').classList.add('hidden');
 
 /* ---------- auth ---------- */
 $('#go').onclick=async()=>{
-  $('#lerr').textContent='';
+  $('#lerr').textContent='Entrando…';
   const {error}=await sb.auth.signInWithPassword({email:$('#em').value.trim(),password:$('#pw').value});
-  if(error)$('#lerr').textContent='E-mail ou senha incorretos.';else boot();
+  if(error)$('#lerr').textContent=(/invalid login/i.test(error.message)?'E-mail ou senha incorretos.':'Erro: '+error.message);else boot();
 };
 $('#pw').addEventListener('keydown',e=>{if(e.key==='Enter')$('#go').click()});
 $('#out').onclick=async()=>{await sb.auth.signOut();location.reload()};
