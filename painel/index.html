@@ -36,6 +36,8 @@ input:focus,select:focus{border-color:var(--orange)}
 .logo svg{width:40px;height:40px;flex:none}
 .logo b{display:block;font-weight:800;font-size:17px;letter-spacing:.2px;line-height:1}
 .logo small{display:block;font-size:9px;letter-spacing:2.4px;color:var(--orange);font-weight:600;margin-top:3px}
+.lg{width:170px;display:block;margin:0 auto 6px}.lg-l{display:none}:root[data-theme="light"] .lg-d{display:none}:root[data-theme="light"] .lg-l{display:block}.lg-side{width:150px;display:block;margin:4px auto 2px}
+.logo{justify-content:center}
 .btn{background:var(--orange);color:#fff;font-weight:700;border-radius:999px;padding:11px 22px;transition:.15s}
 .btn:hover{background:var(--orange-d)}
 .btn.ghost{background:var(--panel2);color:var(--text);font-weight:600}
@@ -162,8 +164,8 @@ const D=v=>v?new Date(v).toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digi
 const DT=v=>v?new Date(v).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}):'—';
 const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const daysAgo=n=>new Date(Date.now()-n*864e5).toISOString();
-const LOGO=`<svg viewBox="0 0 48 48"><path d="M24 4 3 22h6v20h30V22h6L24 4z" fill="#F57C20"/><path d="M24 12 11 23v17h26V23L24 12z" fill="#0E3A4F"/><rect x="20" y="28" width="8" height="12" rx="2" fill="#F6F3EE"/></svg><div><b>LAR</b><small>ESTRATÉGIA DIGITAL</small></div>`;
-$('#logoL').innerHTML=LOGO;$('#logoS').innerHTML=LOGO;
+$('#logoL').innerHTML='<img class="lg lg-d" src="logo-claro.png" alt="LAR Estratégia Digital"><img class="lg lg-l" src="logo-escuro.png" alt="LAR Estratégia Digital">';
+$('#logoS').innerHTML='<img class="lg-side" src="logo-claro.png" alt="LAR Estratégia Digital">';
 let S={user:null,emps:[],emp:null,range:7,page:'dashboard',charts:[]};
 const clearCharts=()=>{S.charts.forEach(c=>c.destroy());S.charts=[]};
 const chart=(id,cfg)=>{const el=document.getElementById(id);if(!el)return;Chart.defaults.color='#8FB0BD';Chart.defaults.font.family='Poppins';S.charts.push(new Chart(el,cfg))};
