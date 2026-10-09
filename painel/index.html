@@ -212,7 +212,7 @@ async function boot(){
 /* ---------- navegação ---------- */
 const NAV=[
  ['Visão geral',[['dashboard','▦','Dashboard']]],
- ['Comercial',[['vendas','◈','Vendas e pedidos'],['marketplaces','⌂','Marketplaces'],['producao','▤','Produção'],['crm','☺','Clientes e CRM'],['leads','◎','Leads B2B']]],
+ ['Comercial',[['vendas','◈','Vendas e pedidos'],['marketplaces','⌂','Marketplaces'],['fluxo','⇄','Fluxo do pedido'],['producao','▤','Produção'],['crm','☺','Clientes e CRM'],['leads','◎','Leads B2B']]],
  ['Financeiro',[['financeiro','$','Financeiro'],['notas','▧','Notas fiscais'],['fornecedores','⚙','Fornecedores']]],
  ['Marketing',[['calendario','▣','Calendário de conteúdo'],['aprovacao','✓','Aprovação'],['feed','◫','Preview do feed'],['redes','☍','Redes conectadas']]],
  ['Inteligência',[['agenda','▥','Agenda'],['ia','✧','IA LAR'],['consultor','✦','Consultor IA'],['motivador','☀','Motivador'],['agentes','✦','Agentes IA'],['planos','◆','Planos e preços'],['equipe','☻','Empresas e equipe']]]
@@ -281,6 +281,83 @@ PAGES.producao=async v=>{
   v.innerHTML=keys.length?`<div class="kan">${keys.map(k=>`<div class="col"><h4>${esc(k)}<span>${cols[k].length}</span></h4>${cols[k].map(p=>`<div class="kc"><b>${esc(p.numero_pedido)} · ${esc(p.cliente_nome)}</b><span>${esc(p.fornecedor||'')} · entrega ${D(p.data_entrega_prevista)}</span></div>`).join('')}</div>`).join('')}</div>`:empty('Nenhum pedido em produção.');
 };
 PAGES.producao.meta=['Produção','Kanban de pedidos por etapa (prazo médio 45 dias)'];
+
+/* ---------- fluxo do pedido: orçamento → pagamento → expedição → nota → transporte → baixa ---------- */
+const ETAPAS=[
+ ['orcamento_aberto','Orçamento em aberto','Tina / Vendas','vendas'],
+ ['aguardando_pagamento','Pagamento','Financeiro','financeiro'],
+ ['separacao','Separação e expedição','Expedição','expedicao'],
+ ['nota_fiscal','Nota fiscal','Financeiro / Fiscal','financeiro'],
+ ['transporte','Transporte','Transporte','transporte'],
+ ['entregue','Entregue','Concluído','transporte']
+];
+const NEXT={orcamento_aberto:'aguardando_pagamento',aguardando_pagamento:'separacao',separacao:'nota_fiscal',nota_fiscal:'transporte',transporte:'entregue'};
+const NEXTLBL={orcamento_aberto:'Fechar orçamento → virar pedido',aguardando_pagamento:'Pagamento definido → liberar expedição',separacao:'Conferido e meio definido → nota fiscal',nota_fiscal:'NF emitida → transporte',transporte:'Dar baixa na entrega'};
+const MEIOS={transportadora:'Transportadora',veiculo_proprio:'Veículo próprio',retirada:'Retirada pelo cliente',correios:'Correios'};
+const FORMAS={avista:'À vista',pix:'Pix',cartao:'Cartão',boleto:'Boleto'};
+PAGES.fluxo=async v=>{
+  const [d,transp]=await Promise.all([
+    q('solarium_pedidos','id,numero_pedido,cliente_nome,cliente_telefone,valor_total,etapa_fluxo,etapa_fluxo_em,pagto_forma,entrega_meio,transportadora_id,numero_nota_fiscal,entrega_motorista,entrega_veiculo,entrega_placa,entrega_comprovante_url,empresa_id',b=>b.neq('etapa_fluxo','cancelado').order('etapa_fluxo_em',{ascending:false}).limit(300)),
+    q('transportadoras','id,nome_transportadora')
+  ]);
+  S.fluxoTransp=transp;
+  const por={};d.forEach(p=>(por[p.etapa_fluxo]=por[p.etapa_fluxo]||[]).push(p));
+  $('#tools').innerHTML=`<button class="btn" id="novoOrc">+ Novo orçamento</button>`;
+  $('#novoOrc').onclick=()=>novoOrcamento();
+  v.innerHTML=`<div class="kan">${ETAPAS.map(([k,l,ag])=>{const L=por[k]||[];const mostra=k==='entregue'?L.slice(0,10):L;
+    return `<div class="col"><h4>${l}<span>${L.length}</span></h4><div class="d" style="font-size:11px;opacity:.7;margin:-4px 0 8px">Agente: ${ag}</div>${mostra.map(p=>`<div class="kc" data-id="${p.id}" style="cursor:pointer"><b>${esc(p.numero_pedido)} · ${esc(p.cliente_nome)}</b><span>${R(p.valor_total)} · ${D(p.etapa_fluxo_em)}</span></div>`).join('')||'<div class="d" style="opacity:.5">vazio</div>'}</div>`}).join('')}</div>`;
+  v.onclick=e=>{const c=e.target.closest('.kc');if(c)abrirPedido(d.find(x=>x.id===c.dataset.id))};
+};
+PAGES.fluxo.meta=['Fluxo do pedido','Orçamento → pagamento → expedição → nota fiscal → transporte → baixa'];
+
+function novoOrcamento(){
+  if(S.emp==='all')return modal('<h3>Escolha uma empresa</h3><p>Selecione a empresa no topo para criar o orçamento.</p>');
+  modal(`<h3>Novo orçamento</h3>
+   <label>Cliente</label><input id="oc_n"><label>Telefone / WhatsApp</label><input id="oc_t">
+   <label>Itens (um por linha: descrição ; quantidade ; valor unitário)</label><textarea id="oc_i" rows="5" placeholder="Poltrona Bali ; 2 ; 1290"></textarea>
+   <p id="oc_e" style="color:#ff8a6b"></p><button class="btn" id="oc_ok">Criar orçamento</button>`);
+  $('#oc_ok').onclick=async()=>{
+    const itens=$('#oc_i').value.split('\n').map(l=>l.split(';').map(s=>s.trim())).filter(a=>a[0]).map((a,i)=>({descricao:a[0],quantidade:Number((a[1]||'1').replace(',','.'))||1,valor_unitario:Number((a[2]||'0').replace(/[R$\s.]/g,'').replace(',','.'))||0,ordem:i}));
+    if(!$('#oc_n').value.trim()||!itens.length){$('#oc_e').textContent='Informe o cliente e ao menos um item.';return}
+    const total=itens.reduce((a,x)=>a+x.quantidade*x.valor_unitario,0);
+    const {data:p,error}=await sb.from('solarium_pedidos').insert({empresa_id:S.emp,cliente_nome:$('#oc_n').value.trim(),cliente_telefone:$('#oc_t').value.trim()||null,valor_total:total,etapa_fluxo:'orcamento_aberto',status:'orcamento'}).select('id').single();
+    if(error){$('#oc_e').textContent='Erro: '+error.message;return}
+    await sb.from('solarium_pedido_itens').insert(itens.map(x=>({...x,pedido_id:p.id})));
+    $('#modal').classList.add('hidden');render();
+  };
+}
+async function abrirPedido(p){
+  const {data:log}=await sb.from('pedido_fluxo_log').select('de,para,agente,usuario,criado_em').eq('pedido_id',p.id).order('criado_em',{ascending:false}).limit(15);
+  const prox=NEXT[p.etapa_fluxo];let campos='';
+  const sel=(id,obj,val)=>`<select id="${id}"><option value="">— escolher —</option>${Object.entries(obj).map(([k,l])=>`<option value="${k}" ${val===k?'selected':''}>${l}</option>`).join('')}</select>`;
+  if(p.etapa_fluxo==='aguardando_pagamento')campos=`<label>Forma de pagamento</label>${sel('f_pg',FORMAS,p.pagto_forma)}`;
+  if(p.etapa_fluxo==='separacao')campos=`<label>Meio de entrega</label>${sel('f_meio',MEIOS,p.entrega_meio)}<label>Transportadora (se houver)</label><select id="f_tr"><option value="">—</option>${(S.fluxoTransp||[]).map(t=>`<option value="${t.id}" ${p.transportadora_id===t.id?'selected':''}>${esc(t.nome_transportadora)}</option>`).join('')}</select>`;
+  if(p.etapa_fluxo==='nota_fiscal')campos=`<label>Número da nota fiscal</label><input id="f_nf" value="${esc(p.numero_nota_fiscal||'')}"><p class="d">A emissão em si está na aba Notas fiscais; aqui você registra o número emitido.</p>`;
+  if(p.etapa_fluxo==='transporte')campos=`<label>Motorista</label><input id="f_mo" value="${esc(p.entrega_motorista||'')}"><label>Veículo</label>${sel('f_ve',{moto:'Moto',carro:'Carro',van:'Van',caminhao:'Caminhão'},p.entrega_veiculo)}<label>Placa</label><input id="f_pl" value="${esc(p.entrega_placa||'')}"><label>Comprovante (nota assinada ou foto da entrega)</label><input type="file" id="f_fi" accept="image/*,application/pdf">`;
+  modal(`<h3>${esc(p.numero_pedido)} · ${esc(p.cliente_nome)}</h3>
+   <p>${R(p.valor_total)} ${p.cliente_telefone?'· '+esc(p.cliente_telefone):''}</p>
+   <p class="d">Pagamento: ${FORMAS[p.pagto_forma]||'—'} · Entrega: ${MEIOS[p.entrega_meio]||'—'} · NF: ${esc(p.numero_nota_fiscal||'—')} ${p.entrega_placa?'· Placa '+esc(p.entrega_placa):''}</p>
+   ${p.entrega_comprovante_url?'<p><a href="#" id="verComp">Ver comprovante</a></p>':''}
+   ${campos}<p id="f_err" style="color:#ff8a6b"></p>
+   ${prox?`<button class="btn" id="f_go">${NEXTLBL[p.etapa_fluxo]}</button>`:'<p>Pedido concluído.</p>'}
+   <h4 style="margin-top:16px">Histórico</h4>${(log||[]).map(l=>`<div class="d">${DT(l.criado_em)} · ${esc(l.de||'')} → ${esc(l.para)} · agente ${esc(l.agente||'—')} · ${esc(l.usuario||'')}</div>`).join('')||'<div class="d">sem movimentos</div>'}`);
+  if(p.entrega_comprovante_url)$('#verComp').onclick=async e=>{e.preventDefault();const {data}=await sb.storage.from('entregas').createSignedUrl(p.entrega_comprovante_url,300);if(data)window.open(data.signedUrl,'_blank')};
+  if(prox)$('#f_go').onclick=async()=>{
+    const dados={};const g=id=>document.getElementById(id)?.value||'';
+    if(p.etapa_fluxo==='aguardando_pagamento')dados.pagto_forma=g('f_pg');
+    if(p.etapa_fluxo==='separacao'){dados.entrega_meio=g('f_meio');dados.transportadora_id=g('f_tr')}
+    if(p.etapa_fluxo==='nota_fiscal')dados.numero_nota_fiscal=g('f_nf');
+    if(p.etapa_fluxo==='transporte'){dados.entrega_motorista=g('f_mo');dados.entrega_veiculo=g('f_ve');dados.entrega_placa=g('f_pl').toUpperCase();
+      const fi=document.getElementById('f_fi')?.files[0];
+      if(fi){const path=`${p.empresa_id}/${p.id}/${Date.now()}-${fi.name.replace(/[^\w.-]/g,'_')}`;const up=await sb.storage.from('entregas').upload(path,fi);if(up.error){$('#f_err').textContent='Falha ao enviar o arquivo: '+up.error.message;return}dados.entrega_comprovante_url=path}}
+    Object.keys(dados).forEach(k=>{if(dados[k]==='')delete dados[k]});
+    // etapa atual → próxima: os dados pedidos pela etapa de destino são os da etapa atual
+    const alvo=NEXT[p.etapa_fluxo];
+    const {data:r,error}=await sb.rpc('fluxo_avancar',{p_pedido:p.id,p_para:alvo,p_dados:dados});
+    if(error||!r?.ok){$('#f_err').textContent=error?.message||r.erro;return}
+    $('#modal').classList.add('hidden');render();
+  };
+}
 
 PAGES.crm=async v=>{
   const d=await q('erp_contatos','nome,tipo,cidade,uf,whatsapp,telefone,instagram,origem,criado_em',b=>b.order('criado_em',{ascending:false}).limit(120));
@@ -465,7 +542,7 @@ PAGES.planos=async v=>{
 PAGES.planos.meta=['Planos e preços','Tabela oficial da LAR Estratégia Digital'];
 
 /* ---- Chat IA LAR (assistente / consultor) ---- */
-const CHATS={assistente:[],consultor:[]};
+const CHATS={assistente:[],consultor:[],cerebro:[]};
 function chatPage(modo,intro){
   return async v=>{
     const emp=S.emp==='all'?S.emps[0]?.id:S.emp;const C=CHATS[modo];
@@ -481,7 +558,7 @@ function chatPage(modo,intro){
     $('#csend').onclick=send;$('#cin').addEventListener('keydown',e=>{if(e.key==='Enter')send()});
   };
 }
-PAGES.ia=chatPage('assistente','Pergunte à IA LAR sobre vendas, pedidos, leads, posts da semana, agenda, o que priorizar hoje… Ela conhece os dados da empresa selecionada.');
+PAGES.ia=chatPage('cerebro','Fale o que precisa e a IA LAR chama o agente certo: "fazer orçamento para a Maria, 2 poltronas Bali", "o que está parado na expedição?", "liberar o pedido 1234 para nota fiscal"… Ela conhece e movimenta os pedidos da empresa selecionada.');
 PAGES.ia.meta=['IA LAR','Assistente de toda a equipe, integrado aos dados da empresa'];
 PAGES.consultor=chatPage('consultor','Conte um desafio do seu negócio (vendas paradas, preço, caixa, equipe, expansão…) e o Consultor IA LAR traz caminhos práticos, com prós, contras e o próximo passo.');
 PAGES.consultor.meta=['Consultor IA','O cérebro de negócios da sua empresa: ideias e soluções para o dia a dia'];
