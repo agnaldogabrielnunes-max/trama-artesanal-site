@@ -30,7 +30,7 @@ PAGES.comparativos=async v=>{
   S.cmpMes=S.cmpMes||new Date().toISOString().slice(0,7);S.cmpTab=S.cmpTab||'vendas';
   const sel=S.cmpMes;
   $('#tools').innerHTML=`<input type="month" id="cm" value="${sel}" style="width:auto">`;$('#cm').onchange=e=>{S.cmpMes=e.target.value;render()};
-  const tabs=[['vendas','Vendas'],['compras','Compras'],['despesas','Despesas e resultado'],['pessoal','Pessoal'],['marketing','Marketing e redes']];
+  const tabs=[['vendas','Vendas'],['compras','Compras'],['despesas','Despesas e resultado'],['pessoal','Pessoal'],['clientes','Clientes e leads'],['marketing','Marketing e redes']];
   let corpo='',pos=()=>{};
   const desde=addM(sel,-24)+'-01';
   if(S.cmpTab==='vendas'){
@@ -65,6 +65,12 @@ PAGES.comparativos=async v=>{
      <div class="card" style="margin-top:14px"><h3>Equipe e datas</h3>${tbl(['Nome','Função','Setor','Salário','Admissão','Demissão'],f.map(x=>[esc(x.nome),esc(x.funcao||''),esc(x.setor||''),R(x.salario),`<input type="date" class="fa" data-id="${x.id}" value="${x.admissao||''}">`,`<input type="date" class="fd" data-id="${x.id}" value="${x.demissao||''}">`]))}<p class="d">As datas de admissão e demissão alimentam os gráficos de contratação e demissão.</p></div>`;
     pos=()=>{graficoSerie('g1',ativos,sel,'Ativos',NUM);graficoSerie('g2',folha,sel,'Folha',R);
       document.querySelectorAll('.fa,.fd').forEach(i=>i.onchange=async()=>{await sb.from('erp_funcionarios').update({[i.classList.contains('fa')?'admissao':'demissao']:i.value||null}).eq('id',i.dataset.id);render()})};
+  }else if(S.cmpTab==='clientes'){
+    const [ct,ld,pd]=await Promise.all([q('erp_contatos','tipo,criado_em',b=>b.gte('criado_em',desde)),q('leads_b2b','status,whatsapp,criado_em',b=>b.gte('criado_em',desde)),q('solarium_pedidos','status,criado_em',b=>b.gte('criado_em',desde).neq('status','cancelado'))]);
+    const novosC=aggMes(ct,x=>x.criado_em),novosL=aggMes(ld,x=>x.criado_em),comTel=aggMes(ld.filter(x=>x.whatsapp),x=>x.criado_em);
+    const ap=aggMes(pd.filter(x=>x.status==='aprovado'),x=>x.criado_em),tot=aggMes(pd,x=>x.criado_em);const conv={};Object.keys(tot).forEach(k=>conv[k]=tot[k]?Math.round((ap[k]||0)/tot[k]*100):0);
+    corpo=`<div class="grid g4">${kpiCmp('Novos contatos/clientes',novosC,sel,NUM)}${kpiCmp('Novos leads B2B',novosL,sel,NUM)}${kpiCmp('Leads com WhatsApp',comTel,sel,NUM)}${kpiCmp('Conversão orçamento → pedido (%)',conv,sel,v=>v+'%')}</div>${blocoGrafico('g1','Novos contatos e clientes — 12 meses')}${blocoGrafico('g2','Novos leads B2B — 12 meses')}`;
+    pos=()=>{graficoSerie('g1',novosC,sel,'Novos contatos',NUM);graficoSerie('g2',novosL,sel,'Novos leads',NUM)};
   }else{
     const [posts,pm,sm,ads]=await Promise.all([
       q('social_posts','id,redes,formato,publicado_em,status',b=>b.not('publicado_em','is',null).gte('publicado_em',desde)),
