@@ -213,7 +213,7 @@ async function boot(){
 const NAV=[
  ['Visão geral',[['dashboard','▦','Dashboard']]],
  ['Comercial',[['vendas','◈','Vendas e pedidos'],['marketplaces','⌂','Marketplaces'],['fluxo','⇄','Fluxo do pedido'],['producao','▤','Produção'],['crm','☺','Clientes e CRM'],['leads','◎','Leads B2B']]],
- ['Financeiro',[['financeiro','$','Financeiro'],['notas','▧','Notas fiscais'],['fornecedores','⚙','Fornecedores']]],
+ ['Financeiro',[['financeiro','$','Financeiro'],['dre','%','DRE e receita do bolo'],['documentos','▤','Documentos e leitor'],['conciliacao','⇄','Conciliação bancária'],['lotes','✔','Pagamento em lote'],['notas','▧','Notas fiscais'],['fornecedores','⚙','Fornecedores']]],
  ['Marketing',[['calendario','▣','Calendário de conteúdo'],['aprovacao','✓','Aprovação'],['feed','◫','Preview do feed'],['redes','☍','Redes conectadas']]],
  ['Inteligência',[['agenda','▥','Agenda'],['ia','✧','IA LAR'],['consultor','✦','Consultor IA'],['motivador','☀','Motivador'],['agentes','✦','Agentes IA'],['planos','◆','Planos e preços'],['equipe','☻','Empresas e equipe']]]
 ];
@@ -638,7 +638,8 @@ PAGES.equipe=async v=>{
 };
 PAGES.equipe.meta=['Empresas e equipe','Marcas gerenciadas pela LAR'];
 
-boot();
 </script>
+<script src="financeiro.js"></script>
+<script>boot();</script>
 </body>
 </html>
