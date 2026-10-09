@@ -1,0 +1,55 @@
+// Catálogo de marketplaces. url = página oficial de cadastro de vendedor (verificada) ou '' (aí o botão abre uma busca guiada).
+// api: true = o marketplace tem API/integração oficial para vendedores (conhecimento do setor; confirmar na hora de ativar).
+// v: 1 = URL conferida em página oficial · 0 = ainda não conferida
+const MKT = [
+ // ---- Brasil
+ ['mercado-livre','Mercado Livre','BR','geral','https://vendedores.mercadolivre.com.br/',true,0,'Maior marketplace do país; API pública de anúncios e pedidos.'],
+ ['shopee-br','Shopee Brasil','BR','geral','https://seller.shopee.com.br/',true,0,'Alto volume; campanhas e frete subsidiado por faixa.'],
+ ['amazon-br','Amazon Brasil','BR','geral','https://sellercentral.amazon.com.br/gp/on-board/workflow/Registration/login.html',true,1,'Comissão por categoria; plano Profissional com mensalidade.'],
+ ['magalu','Magazine Luiza (Parceiro Magalu)','BR','moveis_casa','',true,0,'Forte em casa e móveis; cadastro como parceiro.'],
+ ['americanas','Americanas Marketplace','BR','geral','',null,0,''],
+ ['casas-bahia','Casas Bahia','BR','moveis_casa','',null,0,'Forte em móveis e eletro.'],
+ ['madeiramadeira','MadeiraMadeira','BR','moveis_casa','',null,0,'Especialista em móveis e decoração — prioridade para a Trama.'],
+ ['mobly','Mobly','BR','moveis_casa','',null,0,'Móveis e decoração — prioridade para a Trama.'],
+ ['leroy-merlin','Leroy Merlin','BR','moveis_casa','',null,0,'Casa, jardim e área externa.'],
+ ['carrefour-br','Carrefour Marketplace','BR','geral','',null,0,''],
+ ['shein-br','Shein Brasil','BR','moda','',null,0,''],
+ ['tiktok-shop','TikTok Shop','BR','social_commerce','',true,0,'Venda dentro de vídeos e lives.'],
+ ['kwai-shop','Kwai Shop','BR','social_commerce','',null,0,''],
+ ['aliexpress-br','AliExpress (vendedor local)','BR','geral','',true,0,''],
+ ['temu-br','Temu','BR','geral','',null,0,''],
+ ['netshoes','Netshoes','BR','moda','',null,0,''],
+ ['dafiti','Dafiti','BR','moda','',null,0,''],
+ ['kabum','KaBuM!','BR','geral','https://www.kabum.com.br/hotsite/marketplace',null,0,'Foco em eletrônicos.'],
+ ['olx','OLX Brasil','BR','geral','',true,0,'Classificados com plano para lojistas.'],
+ ['ifood','iFood','BR','alimentos','',true,0,'Alimentos e delivery.'],
+ ['rappi-br','Rappi','BR','alimentos','',true,0,''],
+ // ---- Redes/anúncios
+ ['meta-shops','Instagram e Facebook Shops','Global','social_commerce','',true,0,'Catálogo de produtos nas redes da Meta.'],
+ ['google-merchant','Google Merchant Center (Shopping)','Global','anuncios','',true,0,'Feed de produtos para Google Shopping.'],
+ ['pinterest','Pinterest (catálogo)','Global','anuncios','',true,0,'Pins de produto com link para o site.'],
+ // ---- América Latina
+ ['mercado-libre-mx','Mercado Libre México','LATAM','geral','https://vendedores.mercadolibre.com.mx',true,1,''],
+ ['mercado-libre-ar','Mercado Libre Argentina','LATAM','geral','',true,0,''],
+ ['mercado-libre-co','Mercado Libre Colômbia','LATAM','geral','',true,0,''],
+ ['mercado-libre-cl','Mercado Libre Chile','LATAM','geral','',true,0,''],
+ // ---- Mundo
+ ['amazon-us','Amazon EUA','EUA','geral','https://sellercentral.amazon.com/gp/on-board/workflow/Registration/login.html',true,1,'Plano Professional ~US$39,99/mês + comissão.'],
+ ['amazon-global','Amazon Global Selling','Global','geral','',true,0,''],
+ ['ebay','eBay','Global','geral','https://signup.ebay.com/pa/crte',true,1,''],
+ ['etsy','Etsy','Global','moveis_casa','https://www.etsy.com/your/shop/create',true,1,'Ideal para artesanato: US$0,20/anúncio + 6,5% transação + processamento.'],
+ ['walmart-us','Walmart Marketplace','EUA','geral','https://seller.walmart.com/signup',true,1,'Comissão 6%–15%, sem mensalidade.'],
+ ['wayfair','Wayfair (Partner Home)','EUA','moveis_casa','https://partners.wayfair.com/d/onboarding/registration',true,1,'Móveis — modelo fornecedor, não comissão de marketplace.'],
+ ['faire','Faire','EUA','atacado','',true,0,'Atacado para lojas independentes; bom para artesanato.'],
+ ['alibaba','Alibaba.com','Global','atacado','https://seller.alibaba.com/pricing',true,1,'Atacado/exportação, assinatura.'],
+ ['fruugo','Fruugo','Global','geral','https://sell.fruugo.com/verification/',true,1,'20% de comissão, sem mensalidade; empresas de +40 países.'],
+ ['rakuten','Rakuten Ichiba','Ásia','geral','',true,0,''],
+ ['coupang','Coupang','Ásia','geral','',true,0,''],
+ ['lazada','Lazada','Ásia','geral','',true,0,''],
+ ['flipkart','Flipkart','Ásia','geral','',true,0,''],
+ ['zalando','Zalando','Europa','moda','',true,0,'Entrada por convite.'],
+ ['allegro','Allegro','Europa','geral','',true,0,''],
+ ['cdiscount','Cdiscount','Europa','geral','',true,0,''],
+ ['noon','noon','Oriente Médio','geral','https://login.noon.partners/en/register',null,1,'Exige registro comercial local.'],
+ ['jumia','Jumia','África','geral','',true,0,'']
+];

@@ -152,6 +152,7 @@ td{padding:11px 10px;border-top:1px solid var(--line);font-size:13px;vertical-al
 </div>
 <div id="modal" class="modal hidden"><div class="box"><button class="x" id="mx">×</button><div id="mbody"></div></div></div>
 
+<script src="marketplaces.js"></script>
 <script>
 const SB_URL='https://qgunpfgdsqqgfkimvwhg.supabase.co';
 const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFndW5wZmdkc3FxZ2ZraW12d2hnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIzMjQyMjIsImV4cCI6MjA5NzkwMDIyMn0.LUbnqiP1DPS1GEPrX5KYjHNYQeL_6V0bVgCzlEg49-Q';
@@ -211,10 +212,10 @@ async function boot(){
 /* ---------- navegação ---------- */
 const NAV=[
  ['Visão geral',[['dashboard','▦','Dashboard']]],
- ['Comercial',[['vendas','◈','Vendas e pedidos'],['producao','▤','Produção'],['crm','☺','Clientes e CRM'],['leads','◎','Leads B2B']]],
- ['Financeiro',[['financeiro','$','Financeiro'],['fornecedores','⚙','Fornecedores']]],
+ ['Comercial',[['vendas','◈','Vendas e pedidos'],['marketplaces','⌂','Marketplaces'],['producao','▤','Produção'],['crm','☺','Clientes e CRM'],['leads','◎','Leads B2B']]],
+ ['Financeiro',[['financeiro','$','Financeiro'],['notas','▧','Notas fiscais'],['fornecedores','⚙','Fornecedores']]],
  ['Marketing',[['calendario','▣','Calendário de conteúdo'],['aprovacao','✓','Aprovação'],['feed','◫','Preview do feed'],['redes','☍','Redes conectadas']]],
- ['Inteligência',[['agentes','✦','Agentes IA'],['equipe','☻','Empresas e equipe']]]
+ ['Inteligência',[['ia','✧','IA LAR'],['agentes','✦','Agentes IA'],['planos','◆','Planos e preços'],['equipe','☻','Empresas e equipe']]]
 ];
 function buildNav(){
   $('#nav').innerHTML=NAV.map(([g,items])=>`<div class="grp">${g}</div>`+items.map(([id,ic,l])=>`<button data-p="${id}"><span class="ic">${ic}</span>${l}</button>`).join('')).join('');
@@ -348,12 +349,6 @@ async function setPost(id,st){
   $('#modal').classList.add('hidden');if(error)alert('Sem permissão ou erro: '+error.message);render();
 }
 
-PAGES.aprovacao=async v=>{
-  const d=await q('social_posts','id,formato,status,agendado_para,titulo,legenda,imagem_url,midia_urls',b=>b.in('status',['rascunho','pendente','aguardando_aprovacao']).order('agendado_para').limit(60));
-  window._posts=d;
-  v.innerHTML=d.length?`<div class="grid g3">${d.map(p=>`<div class="card"><img src="${esc(p.imagem_url||(p.midia_urls||[])[0]||'')}" style="width:100%;aspect-ratio:4/5;object-fit:cover;border-radius:12px;background:var(--panel2)" alt=""><p style="margin:10px 0 4px"><b>${esc(p.titulo||p.formato)}</b></p><p style="color:var(--mut);font-size:12px">${DT(p.agendado_para)} · ${esc(p.formato)}</p><div style="display:flex;gap:8px;margin-top:10px"><button class="btn sm" onclick="setPost('${p.id}','aprovado')">Aprovar</button><button class="btn ghost sm" onclick="openPost('${p.id}')">Ver</button></div></div>`).join('')}</div>`:empty('Nada aguardando aprovação 🎉');
-};
-PAGES.aprovacao.meta=['Aprovação','Posts aguardando o ok antes de publicar'];
 
 PAGES.feed=async v=>{
   const d=await q('social_posts','id,formato,status,imagem_url,midia_urls,agendado_para',b=>b.in('formato',['feed','carrossel']).not('status','eq','cancelado').order('agendado_para',{ascending:false}).limit(30));
@@ -369,12 +364,120 @@ PAGES.redes=async v=>{
 };
 PAGES.redes.meta=['Redes conectadas','Status das contas e rotina de publicação'];
 
-PAGES.agentes=async v=>{
-  const [a,at]=await Promise.all([q('agentes','nome,funcao,status,autonomia,conexao'),q('agente_atividades','tipo,descricao,criado_em',b=>b.order('criado_em',{ascending:false}).limit(15))]);
-  v.innerHTML=`<div class="grid g3">${a.map(x=>`<div class="card"><h3>${esc(x.nome)} ${stPill(x.status)}</h3><p style="font-size:13px">${esc(x.funcao)}</p><p style="color:var(--mut);font-size:11px;margin-top:8px">Autonomia: ${esc(x.autonomia||'—')}</p></div>`).join('')||empty('Nenhum agente cadastrado.')}</div>
-  <div class="card" style="margin-top:16px"><h3>Atividade recente</h3>${tbl(['Quando','Tipo','Descrição'],at.map(x=>[DT(x.criado_em),`<span class="pill tl">${esc(x.tipo)}</span>`,esc(x.descricao)]))}</div>`;
+
+
+/* ---- Aprovação (aguardando + agendados) ---- */
+let APR={aba:'agendados'};
+PAGES.aprovacao=async v=>{
+  const hoje=new Date().toISOString();
+  const [ag,aprov]=await Promise.all([
+    q('social_posts','id,formato,status,agendado_para,titulo,legenda,imagem_url,midia_urls,redes',b=>b.in('status',['rascunho','pendente','aguardando_aprovacao']).order('agendado_para').limit(80)),
+    q('social_posts','id,formato,status,agendado_para,titulo,legenda,imagem_url,midia_urls,redes',b=>b.eq('status','aprovado').gte('agendado_para',hoje).order('agendado_para').limit(80))
+  ]);
+  const err=await q('social_posts','id,formato,status,agendado_para,titulo,legenda,imagem_url,midia_urls,redes',b=>b.eq('status','erro').order('agendado_para',{ascending:false}).limit(20));
+  window._posts=[...ag,...aprov,...err];
+  const lista=APR.aba==='aguardando'?ag:APR.aba==='erro'?err:aprov;
+  const fmtF=f=>({feed:'Post',story:'Story',reel:'Reel',carrossel:'Carrossel'}[f]||f);
+  v.innerHTML=`<div class="chips">
+    <button class="chip ${APR.aba==='agendados'?'on':''}" data-a="agendados">Agendados (${aprov.length})</button>
+    <button class="chip ${APR.aba==='aguardando'?'on':''}" data-a="aguardando">Aguardando aprovação (${ag.length})</button>
+    <button class="chip ${APR.aba==='erro'?'on':''}" data-a="erro">Com erro (${err.length})</button></div>
+  <p style="color:var(--mut);font-size:12px;margin-bottom:14px">${APR.aba==='agendados'?'Posts da Tina já aprovados e programados — você pode cancelar ou editar antes de sair.':APR.aba==='aguardando'?'Posts fora das regras automáticas esperam seu ok aqui.':'Posts que falharam na publicação. Ao reaprovar, o robô tenta de novo.'}</p>
+  ${lista.length?`<div class="grid g3">${lista.map(p=>`<div class="card"><img src="${esc(p.imagem_url||(p.midia_urls||[])[0]||'')}" style="width:100%;aspect-ratio:4/5;object-fit:cover;border-radius:12px;background:var(--panel2)" alt="" loading="lazy"><p style="margin:10px 0 4px"><b>${esc(p.titulo||fmtF(p.formato))}</b></p><p style="color:var(--mut);font-size:12px"><span class="pill or">${fmtF(p.formato)}</span> ${DT(p.agendado_para)}</p><div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap"><button class="btn sm" onclick="setPost('${p.id}','aprovado')">${p.status==='aprovado'?'Manter':'Aprovar'}</button><button class="btn ghost sm" onclick="openPost('${p.id}')">Ver / editar</button><button class="btn ghost sm" onclick="setPost('${p.id}','cancelado')">Cancelar</button></div></div>`).join('')}</div>`:empty('Nada nesta lista.')}`;
+  v.querySelector('.chips').onclick=e=>{const b=e.target.closest('[data-a]');if(b){APR.aba=b.dataset.a;render()}};
 };
-PAGES.agentes.meta=['Agentes IA','Tina e demais agentes: funções e atividade'];
+PAGES.aprovacao.meta=['Aprovação','Posts, reels e stories: aprovar, editar ou cancelar antes de publicar'];
+
+/* ---- Agentes ---- */
+const ROBOS={
+  tina:[['Publicação automática de posts, stories e reels','a cada 10 min','ok'],['Métricas Instagram/Facebook','todo dia 06:20','ok']],
+  mercado:[['Prospecção de leads (Google Places)','todo dia 08:00','key'],['Análise de concorrentes (sites)','todo dia 07:00','ok']],
+  marketing:[['Relatório diário de desempenho','—','pend']],
+  vendas:[['Follow-up de orçamentos em aberto','—','pend']],
+  financeiro:[['Vencimentos da semana e NF prontas','—','pend']],
+  rh:[],representante:[],atendimento:[]
+};
+PAGES.agentes=async v=>{
+  const [a,at]=await Promise.all([q('agentes','id,slug,nome,funcao,status,autonomia,rotina'),q('agente_atividades','tipo,descricao,criado_em,agente_id',b=>b.order('criado_em',{ascending:false}).limit(25))]);
+  const bd=r=>r==='ok'?'<span class="pill ok">agendado</span>':r==='key'?'<span class="pill warn">falta chave Google</span>':'<span class="pill bad">robô ainda não agendado</span>';
+  v.innerHTML=`<div class="grid g3">${a.map(x=>`<div class="card"><h3>${esc(x.nome)} ${stPill(x.status)}</h3><p style="font-size:13px;margin-bottom:8px">${esc(x.funcao||'')}</p><p style="color:var(--mut);font-size:11px;margin-bottom:8px">Autonomia: <b>${x.autonomia==='publica_sozinho'?'publica sozinho':'precisa de aprovação'}</b></p>${(ROBOS[x.slug]||[]).map(r=>`<div style="font-size:12px;display:flex;justify-content:space-between;gap:8px;padding:5px 0;border-top:1px solid var(--line)"><span>${r[0]}<br><span style="color:var(--mut)">${r[1]}</span></span>${bd(r[2])}</div>`).join('')||'<p style="color:var(--mut);font-size:12px">Sem rotina automática ainda.</p>'}</div>`).join('')||empty('Nenhum agente cadastrado.')}</div>
+  <div class="card" style="margin-top:16px"><h3>Atividade recente dos agentes</h3>${tbl(['Quando','Agente','Tipo','O que fez'],at.map(x=>[DT(x.criado_em),esc((a.find(g=>g.id===x.agente_id)||{}).nome||'—'),stPill(x.tipo),esc(x.descricao)]))}</div>`;
+};
+PAGES.agentes.meta=['Agentes IA','Quem trabalha por você, o que já roda sozinho e o que ainda falta'];
+
+/* ---- Marketplaces ---- */
+let MK={reg:'todos',cat:'todos',busca:''};
+const MKCAT={geral:'Geral',moveis_casa:'Casa e móveis',moda:'Moda',alimentos:'Alimentos',atacado:'Atacado',social_commerce:'Social commerce',anuncios:'Anúncios'};
+PAGES.marketplaces=async v=>{
+  const ligs=await q('empresa_marketplaces','marketplace,status');
+  const st=Object.fromEntries(ligs.map(l=>[l.marketplace,l.status]));
+  const regs=['todos',...new Set(MKT.map(m=>m[2]))];
+  const lista=MKT.filter(m=>(MK.reg==='todos'||m[2]===MK.reg)&&(MK.cat==='todos'||m[3]===MK.cat)&&(!MK.busca||m[1].toLowerCase().includes(MK.busca)));
+  const conectados=ligs.filter(l=>l.status==='conectado').length;
+  v.innerHTML=`<div class="grid g3" style="margin-bottom:16px"><div class="card kpi"><h3>No catálogo</h3><div class="v">${MKT.length}</div><div class="d">marketplaces do Brasil e do mundo</div></div><div class="card kpi teal"><h3>Conectados</h3><div class="v">${conectados}</div><div class="d">${ligs.length-conectados} solicitados/em andamento</div></div><div class="card kpi acc"><h3>Como funciona</h3><div class="d" style="color:#fff;font-size:12px;margin-top:2px">1) tem conta? clique <b>Conectar</b> e a equipe LAR liga ao sistema.<br>2) não tem? <b>Abrir conta</b> leva ao cadastro oficial; depois volte e conecte.</div></div></div>
+  <div class="chips">${regs.map(r=>`<button class="chip ${MK.reg===r?'on':''}" data-r="${r}">${r==='todos'?'Todas as regiões':r}</button>`).join('')}</div>
+  <div class="chips">${['todos',...Object.keys(MKCAT)].map(c=>`<button class="chip ${MK.cat===c?'on':''}" data-c="${c}">${c==='todos'?'Todas as categorias':MKCAT[c]}</button>`).join('')}<input id="mkb" placeholder="Buscar marketplace…" value="${esc(MK.busca)}" style="max-width:240px;margin-left:auto"></div>
+  <div class="grid g3">${lista.map(m=>{const s=st[m[0]];const url=m[4]||('https://www.google.com/search?q='+encodeURIComponent(m[1]+' cadastro de vendedor como vender'));
+    return `<div class="card"><h3>${esc(m[1])}<span class="pill tl">${esc(m[2])}</span></h3><p style="font-size:12px;color:var(--mut);min-height:34px">${esc(m[7]||MKCAT[m[3]]||'')}</p><p style="margin:8px 0"><span class="pill">${MKCAT[m[3]]}</span> ${m[5]?'<span class="pill ok">API de integração</span>':''} ${m[6]?'':'<span class="pill warn" title="Link oficial ainda não conferido: o botão abre uma busca guiada">link a conferir</span>'}</p>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">${s?`<span class="pill ${s==='conectado'?'ok':'warn'}">${s==='conectado'?'✓ conectado':s==='sem_conta'?'precisa abrir conta':s.replace('_',' ')}</span>`:`<button class="btn sm" data-con="${m[0]}">Conectar minha conta</button>`}<a class="btn ghost sm" href="${esc(url)}" target="_blank" rel="noopener" ${s?'':`data-sem="${m[0]}"`}>${s?'Painel / cadastro':'Não tenho conta · abrir'}</a></div></div>`}).join('')||empty('Nenhum marketplace com esse filtro.')}</div>`;
+  v.onclick=async e=>{
+    const r=e.target.closest('[data-r]'),c=e.target.closest('[data-c]'),cn=e.target.closest('[data-con]'),sm=e.target.closest('[data-sem]');
+    if(r){MK.reg=r.dataset.r;render()}else if(c){MK.cat=c.dataset.c;render()}
+    else if(cn||sm){
+      const slug=(cn||sm).dataset.con||(sm).dataset.sem;const emp=S.emp==='all'?S.emps[0]?.id:S.emp;
+      const {error}=await sb.from('empresa_marketplaces').upsert({empresa_id:emp,marketplace:slug,status:cn?'solicitado':'sem_conta',atualizado_em:new Date().toISOString()},{onConflict:'empresa_id,marketplace'});
+      if(error)alert('Não foi possível registrar: '+error.message);else if(cn){alert('Pedido de conexão registrado. A equipe LAR conclui a ligação da sua conta.');render()}
+    }
+  };
+  const bi=document.getElementById('mkb');bi.oninput=()=>{MK.busca=bi.value.toLowerCase();clearTimeout(window._mt);window._mt=setTimeout(()=>{render().then(()=>{const n=document.getElementById('mkb');n.focus();n.setSelectionRange(99,99)})},250)};
+};
+PAGES.marketplaces.meta=['Marketplaces','Conecte a conta da empresa aos marketplaces do Brasil e do mundo'];
+
+/* ---- Notas fiscais ---- */
+PAGES.notas=async v=>{
+  const d=await q('notas_fiscais','id,status,numero,serie,valor_total,destinatario,pendencias,erro,pdf_url,criado_em,ambiente',b=>b.order('criado_em',{ascending:false}).limit(60));
+  v.innerHTML=`<div class="card"><p style="color:var(--mut);font-size:12px;margin-bottom:10px">Emissor LAR conectado. As notas só saem em produção depois da liberação do contador; hoje o ambiente é de homologação (teste).</p>${tbl(['Pedido/Cliente','Valor','Status','Nº','Ambiente','Ações'],d.map(n=>[esc(n.destinatario?.nome||'—'),R(n.valor_total),stPill(n.status)+(n.erro?`<br><span style="font-size:11px;color:var(--bad)">${esc(String(n.erro).slice(0,90))}</span>`:''),esc(n.numero||'—'),esc(n.ambiente||'—'),
+    (['rascunho','erro'].includes(n.status)?`<button class="btn sm" data-emit="${n.id}">Emitir</button>`:n.status==='emitindo'?`<button class="btn ghost sm" data-st="${n.id}">Atualizar</button>`:n.pdf_url?`<a class="btn ghost sm" href="${esc(n.pdf_url)}" target="_blank">PDF</a>`:'')]))}</div>`;
+  v.onclick=async e=>{
+    const b=e.target.closest('[data-emit],[data-st]');if(!b)return;
+    const acao=b.dataset.emit?'emitir':'status',id=b.dataset.emit||b.dataset.st;b.textContent='…';
+    const {data,error}=await sb.functions.invoke('nf-emitir',{body:{acao,nota_id:id}});
+    const r=data||{};if(error&&!data)alert('Erro: '+error.message);else if(r.ok===false)alert('Não emitiu: '+(r.falta?('faltam dados: '+r.falta.join('; ')):JSON.stringify(r.erro)));
+    render();
+  };
+};
+PAGES.notas.meta=['Notas fiscais','Emissor LAR · NF-e dos pedidos'];
+
+/* ---- IA LAR ---- */
+let CHAT=[];
+PAGES.ia=async v=>{
+  const emp=S.emp==='all'?S.emps[0]?.id:S.emp;
+  v.innerHTML=`<div class="card" style="max-width:860px"><div id="chat" style="min-height:320px;max-height:55vh;overflow:auto;display:flex;flex-direction:column;gap:10px;margin-bottom:12px">${CHAT.length?'':'<p style="color:var(--mut);font-size:13px">Pergunte à IA LAR sobre vendas, pedidos, leads, posts da semana, o que priorizar hoje… Ela conhece os dados da empresa selecionada.</p>'}</div>
+  <div style="display:flex;gap:8px"><input id="cin" placeholder="Digite sua pergunta…"><button class="btn" id="csend">Enviar</button></div><p id="cuso" style="color:var(--mut);font-size:11px;margin-top:8px"></p></div>`;
+  const draw=()=>{$('#chat').innerHTML=CHAT.map(m=>`<div style="align-self:${m.role==='user'?'flex-end':'flex-start'};max-width:85%;background:${m.role==='user'?'var(--orange)':'var(--panel2)'};color:${m.role==='user'?'#fff':'var(--text)'};padding:10px 14px;border-radius:16px;white-space:pre-wrap;font-size:13px">${esc(m.content)}</div>`).join('');$('#chat').scrollTop=1e6};
+  draw();
+  const send=async()=>{const t=$('#cin').value.trim();if(!t)return;$('#cin').value='';CHAT.push({role:'user',content:t});CHAT.push({role:'assistant',content:'…'});draw();
+    const {data,error}=await sb.functions.invoke('ia-lar',{body:{empresa_id:emp,mensagens:CHAT.slice(0,-1)}});
+    let r=data;if(!r&&error){try{r=await error.context.json()}catch(e){r={}}}
+    CHAT[CHAT.length-1].content=r?.ok?r.resposta:(r?.mensagem||'Não consegui responder agora.');draw();
+    if(r?.uso)$('#cuso').textContent=`Uso do mês: ${Math.round(r.uso.usado/1000)} mil de ${Math.round(r.uso.limite/1000)} mil unidades${r.uso.excedente?' · acima do pacote (excedente cobrado à parte)':''}`;};
+  $('#csend').onclick=send;$('#cin').addEventListener('keydown',e=>{if(e.key==='Enter')send()});
+};
+PAGES.ia.meta=['IA LAR','Assistente de toda a equipe, integrado aos dados da empresa'];
+
+/* ---- Planos e preços ---- */
+PAGES.planos=async v=>{
+  const T=(t,rows)=>`<div class="card"><h3>${t}</h3>${tbl(['Item','Valor','Observação'],rows)}</div>`;
+  v.innerHTML=`<div class="grid g2" style="grid-template-columns:1fr 1fr">
+  ${T('Marketing e sites',[['Gestão de redes sociais','R$ 600/mês',''],['Site sob medida','R$ 1.199','pagamento único'],['Site modelo pronto (editável)','R$ 399','pagamento único'],['Gestão de Ads (Google + Meta)','1 salário mínimo/mês','por empresa'],['Domínio','R$ 59/ano','cobrado à parte'],['Manutenção do site','incluída','nos planos contratados']])}
+  ${T('Sistema de vendas próprio',[['Loja Modelo Padrão','R$ 299/mês','sem taxa única'],['Loja 100% personalizada até 100 / 200 / 500 produtos','R$ 1.499 / 1.699 / 1.899','taxa única + R$ 249/mês'],['Cada 200 produtos extras','+ R$ 200',''],['Pagamento anual','10% de desconto','em todos os planos'],['Add-on gestão de redes','R$ 499/mês',''],['Add-on marketplaces (até 6)','R$ 1.621 implantação','+ 15% de comissão sobre vendas']])}
+  ${T('Emissor de notas e certificado',[['Emissor de Nota Fiscal LAR','R$ 250 por empresa','inclui 100 notas · confirmar se o período é mensal'],['Notas acima do pacote','R$ 0,20 por nota',''],['Certificado digital','R$ 290/ano','vendido pela LAR ao cliente']])}
+  ${T('Comissões',[['Vendas geradas pelas redes sociais','15%',''],['Marketplace — preço cheio / promocional','15% / 8%',''],['Marketplace sem pacote completo','1 salário mínimo de implantação + 15%',''],['Representante comercial (lojas e atacado)','15% total','7% repassado ao representante por estado · 8% líquido p/ a empresa']])}
+  ${T('IA LAR e agentes',[['IA LAR — pacote de uso por cliente','limite mensal por empresa','a LAR contrata um pacote maior e divide; marca própria, sem citar o provedor'],['Excedente de uso','custo × 1,5','ex.: custo R$100 → cobra R$150'],['Agentes de IA (WhatsApp, leads, vendas, RH…)','mensalidade no meio do mercado','valor final a fechar'],['Custos de terceiros (Meta/WhatsApp, API de IA, Make)','2× o custo','repassados ao cliente']])}
+  ${T('Contrato',[['Vigência','12 meses',''],['Encerramento','a qualquer momento','aviso prévio de 30 dias']])}
+  </div>`;
+};
+PAGES.planos.meta=['Planos e preços','Tabela oficial da LAR Estratégia Digital'];
 
 PAGES.equipe=async v=>{
   const {data}=await sb.from('empresas').select('nome,slug,cnpj,ativo');
