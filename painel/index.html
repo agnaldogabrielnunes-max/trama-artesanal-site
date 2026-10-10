@@ -174,10 +174,10 @@ async function q(table,sel='*',f=x=>x){
   let b=sb.from(table).select(sel);
   if(S.emp&&S.emp!=='all')b=b.eq('empresa_id',S.emp);
   const {data,error}=await f(b);
-  if(error){console.warn(table,error.message);return[]}
+  if(error){console.warn(table,error.message);window._qerr=table+': '+error.message;try{const el=document.getElementById('qerr')||Object.assign(document.createElement('div'),{id:'qerr'});el.style.cssText='position:fixed;bottom:12px;left:50%;transform:translateX(-50%);background:#7a1f1f;color:#fff;padding:8px 14px;border-radius:10px;font-size:12px;z-index:99';el.textContent='Erro ao carregar '+table+': '+error.message;document.body.appendChild(el);setTimeout(()=>el.remove(),9000)}catch(e){}return[]}
   return data||[];
 }
-const stPill=s=>{s=(s||'').toLowerCase();const c=/pago|public|entreg|conclu|aprov|ativo|quit|ok/.test(s)?'ok':/cancel|atras|falh|erro|perd/.test(s)?'bad':/pend|aguard|rascun|orc|agend/.test(s)?'warn':'tl';return `<span class="pill ${c}">${esc(s||'—')}</span>`};
+const stPill=s=>{s=(s||'').toLowerCase();const c=/pago|public|entreg|conclu|aprov|ativo|quit|ok/.test(s)?'ok':/cancel|atras|falh|erro|perd/.test(s)?'bad':/pend|aguard|rascun|orc|agend|revis|ajuste/.test(s)?'warn':'tl';return `<span class="pill ${c}">${esc(s||'—')}</span>`};
 const empty=m=>`<div class="emp">${m}</div>`;
 const tbl=(heads,rows)=>rows.length?`<div class="tw"><table><thead><tr>${heads.map(h=>`<th>${h}</th>`).join('')}</tr></thead><tbody>${rows.map(r=>`<tr>${r.map(c=>`<td>${c}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`:empty('Sem registros para esta empresa ainda.');
 function modal(html){$('#mbody').innerHTML=html;$('#modal').classList.remove('hidden')}
@@ -448,7 +448,7 @@ let APR={aba:'agendados'};
 PAGES.aprovacao=async v=>{
   const hoje=new Date().toISOString();
   const [ag,aprov]=await Promise.all([
-    q('social_posts','id,formato,status,agendado_para,titulo,legenda,imagem_url,midia_urls,redes',b=>b.in('status',['rascunho','pendente','aguardando_aprovacao']).order('agendado_para').limit(80)),
+    q('social_posts','id,formato,status,agendado_para,titulo,legenda,imagem_url,midia_urls,redes',b=>b.in('status',['rascunho','pendente','aguardando_aprovacao','em_revisao','ajuste_solicitado']).order('agendado_para').limit(80)),
     q('social_posts','id,formato,status,agendado_para,titulo,legenda,imagem_url,midia_urls,redes',b=>b.eq('status','aprovado').gte('agendado_para',hoje).order('agendado_para').limit(80))
   ]);
   const err=await q('social_posts','id,formato,status,agendado_para,titulo,legenda,imagem_url,midia_urls,redes',b=>b.eq('status','erro').order('agendado_para',{ascending:false}).limit(20));
