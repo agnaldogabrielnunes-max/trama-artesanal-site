@@ -30,3 +30,6 @@ User-agent: meta-externalagent
 Allow: /
 
 Sitemap: https://tramaartesanal.com.br/sitemap.xml
+
+User-agent: *
+Disallow: /parceiros/
