@@ -4,6 +4,8 @@ const x = (s) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;");
 exports.handler = async () => {
   const hoje = new Date().toISOString().slice(0, 10);
   const urls = [`<url><loc>${S.SITE}/</loc><lastmod>${hoje}</lastmod><changefreq>weekly</changefreq><priority>1.0</priority></url>`];
+  urls.push(`<url><loc>${S.SITE}/blog/</loc><lastmod>${hoje}</lastmod><changefreq>weekly</changefreq><priority>0.7</priority></url>`);
+  for (const b of ["tendencias-decoracao-varanda-area-externa-2026","prepare-sua-casa-para-festas-de-fim-de-ano-natal-reveillon","como-escolher-moveis-area-externa-marcas-confiaveis-evitar-golpes","como-funciona-compra-de-moveis-sob-encomenda-prazo-garantia-entrega"]) urls.push(`<url><loc>${S.SITE}/blog/${b}</loc><lastmod>${hoje}</lastmod><changefreq>monthly</changefreq><priority>0.6</priority></url>`);
   try {
     const lista = await S.carregarProdutos();
     for (const c of S.CATEGORIAS) if (S.filtrar(lista, c).length)
