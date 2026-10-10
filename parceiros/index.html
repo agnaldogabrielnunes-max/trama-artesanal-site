@@ -45,6 +45,7 @@
  <p><b>Você conhece alguém que está precisando de banquetas, cadeiras, mesas, sofás, poltronas ou espreguiçadeiras para a casa?</b> Indique com seu link.</p>
 </section>
 
+<div id="boxVideo" class="box oculto" style="padding:0;border:0"><video id="videoParceiro" controls playsinline preload="metadata" style="width:100%;max-height:520px;background:#000"></video></div>
 <h2>Como funciona</h2>
 <div class="passos">
  <div class="passo"><b>1. Cadastro</b>Crie sua conta, envie documento, selfie e comprovante de endereço.</div>
@@ -105,6 +106,7 @@
  <div id="contrato" class="contrato"></div>
  <label style="display:flex;gap:8px;align-items:flex-start"><input id="okContrato" type="checkbox" style="width:auto;margin-top:4px"> Li e aceito o contrato (aceite digital com registro de data, IP e versão).</label>
  <label style="display:flex;gap:8px;align-items:flex-start"><input id="okLgpd" type="checkbox" style="width:auto;margin-top:4px"> Autorizo o tratamento dos meus dados e documentos pela Trama Artesanal (LAR Móveis e Utilidades Ltda) exclusivamente para análise de cadastro, pagamentos e obrigações legais (LGPD).</label>
+ <label style="display:flex;gap:8px;align-items:flex-start"><input id="okOfertas" type="checkbox" style="width:auto;margin-top:4px"> (Opcional) Quero receber novidades e ofertas futuras da Trama e da LAR.</label>
  <button id="btnEnviar">Enviar cadastro</button> <button id="btnSair1" class="sec">Sair</button>
 </div>
 
@@ -148,6 +150,17 @@ const CONTRATO = `CONTRATO DE PARCERIA E DIVULGAÇÃO (MINUTA v1)
 const SB = supabase.createClient('https://qgunpfgdsqqgfkimvwhg.supabase.co','sb_publishable_zf7UMVosztpLCHpAYRvoHA_WX9_X0wy');
 const $ = id => document.getElementById(id);
 const R$ = v => 'R$ ' + Number(v||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+function traduz(e){ const m=(e&&e.message)||String(e||''); const x=m.toLowerCase();
+ if(x.includes('invalid login')) return 'E-mail ou senha incorretos.';
+ if(x.includes('already registered')||x.includes('already been registered')) return 'Este e-mail já tem conta. Clique em Entrar.';
+ if(x.includes('password should be')||x.includes('weak password')) return 'A senha precisa ter pelo menos 6 caracteres.';
+ if(x.includes('not confirmed')) return 'Confirme seu e-mail (veja a caixa de entrada e o spam) e depois clique em Entrar.';
+ if(x.includes('rate limit')||x.includes('too many')) return 'Muitas tentativas. Aguarde alguns minutos e tente de novo.';
+ if(x.includes('valid email')||x.includes('invalid email')) return 'Digite um e-mail válido.';
+ if(x.includes('duplicate')||x.includes('unique')) return 'Já existe um cadastro com estes dados.';
+ if(x.includes('failed to fetch')||x.includes('network')) return 'Sem conexão. Verifique a internet e tente de novo.';
+ if(/[áéíóúãõç]|^(faça|escolha|marque|envie|informe|cpf|já|cadastro|arquivo)/i.test(m)) return m;
+ return 'Não foi possível concluir agora. Tente novamente ou chame no WhatsApp (44) 99910-4459.'; }
 function aviso(t, erro){ const m=$('msg'); m.textContent=t; m.className='msg'+(erro?' erro':''); m.classList.remove('oculto'); }
 function mostrar(id){ ['telaLogin','telaCadastro','telaStatus','telaPainel'].forEach(x=>$(x).classList.toggle('oculto',x!==id)); }
 $('contrato').textContent = CONTRATO;
@@ -162,7 +175,7 @@ async function atualizar(){
  const { data:{ session } } = await SB.auth.getSession();
  if(!session){ mostrar('telaLogin'); return; }
  const { data, error } = await SB.rpc('afiliado_meu_resumo');
- if(error){ aviso('Erro ao carregar: '+error.message,true); mostrar('telaLogin'); return; }
+ if(error){ aviso(traduz(error),true); mostrar('telaLogin'); return; }
  if(!data.cadastrado){ $('email').value=session.user.email; mostrar('telaCadastro'); return; }
  if(data.status==='aprovado'){ painel(data); return; }
  const msgs={em_analise:'Cadastro recebido. Nossa equipe está conferindo seus documentos. Você será avisado quando seu link for liberado.',aprovado_atendimento:'Documentos conferidos. Falta a aprovação final da diretoria.',recusado:'Seu cadastro não foi aprovado. Fale com o atendimento no WhatsApp (44) 99910-4459.',bloqueado:'Cadastro bloqueado. Fale com o atendimento.',cadastro:'Cadastro incompleto.'};
@@ -180,8 +193,8 @@ function painel(d){
 async function sair(){ await SB.auth.signOut(); $('msg').classList.add('oculto'); atualizar(); }
 $('btnSair1').onclick=sair; $('btnSair2').onclick=sair;
 $('btnCopiar').onclick=()=>{ $('pLink').select(); navigator.clipboard&&navigator.clipboard.writeText($('pLink').value); aviso('Link copiado!'); };
-$('btnEntrar').onclick=async()=>{ const {error}=await SB.auth.signInWithPassword({email:$('email').value.trim(),password:$('senha').value}); if(error) return aviso('Não foi possível entrar: '+error.message,true); $('msg').classList.add('oculto'); atualizar(); };
-$('btnCriar').onclick=async()=>{ const {data,error}=await SB.auth.signUp({email:$('email').value.trim(),password:$('senha').value}); if(error) return aviso('Erro ao criar conta: '+error.message,true); if(data.session){ atualizar(); } else aviso('Conta criada! Confirme seu e-mail e depois clique em Entrar.'); };
+$('btnEntrar').onclick=async()=>{ const {error}=await SB.auth.signInWithPassword({email:$('email').value.trim(),password:$('senha').value}); if(error) return aviso(traduz(error),true); $('msg').classList.add('oculto'); atualizar(); };
+$('btnCriar').onclick=async()=>{ const {data,error}=await SB.auth.signUp({email:$('email').value.trim(),password:$('senha').value}); if(error) return aviso(traduz(error),true); if(data.session){ atualizar(); } else aviso('Conta criada! Confirme seu e-mail e depois clique em Entrar.'); };
 
 async function subir(uid,file,nome){ if(!file) throw new Error('Envie todos os arquivos.'); if(file.size>8*1024*1024) throw new Error('Arquivo acima de 8 MB: '+file.name);
  const ext=(file.name.split('.').pop()||'jpg').toLowerCase().replace(/[^a-z0-9]/g,''); const path=`${uid}/${nome}_${Date.now()}.${ext}`;
@@ -193,9 +206,9 @@ $('btnEnviar').onclick=async()=>{
   const [a,b,c]=await Promise.all([subir(user.id,$('f1').files[0],'doc'),subir(user.id,$('f2').files[0],'selfie'),subir(user.id,$('f3').files[0],'endereco')]);
   const r=await SB.rpc('afiliado_cadastrar',{p:{tipo:$('tipo').value,nome:$('nome').value.trim(),documento:$('documento').value,razao_social:$('razao').value,email:user.email,telefone:$('telefone').value,
    endereco:{cep:$('cep').value,rua:$('rua').value,bairro:$('bairro').value,cidade:$('cidade').value},redes:{perfil:$('redes').value},chave_pix:$('pix').value.trim(),regime_fiscal:$('regime').value,inscricao_municipal:$('im').value,
-   doc_frente_path:a,selfie_path:b,comprovante_endereco_path:c,aceite_contrato:$('okContrato').checked,lgpd:$('okLgpd').checked,contrato_versao:'v1-minuta',contrato_hash:await sha256(CONTRATO)}});
+   doc_frente_path:a,selfie_path:b,comprovante_endereco_path:c,aceite_contrato:$('okContrato').checked,lgpd:$('okLgpd').checked,ofertas:$('okOfertas').checked,contrato_versao:'v1-minuta',contrato_hash:await sha256(CONTRATO)}});
   if(r.error) throw r.error; aviso('Cadastro enviado! Em breve entramos em contato.'); atualizar();
- }catch(e){ aviso(e.message||String(e),true); } finally{ $('btnEnviar').disabled=false; }
+ }catch(e){ aviso(traduz(e),true); } finally{ $('btnEnviar').disabled=false; }
 };
 atualizar();
 </script>
