@@ -214,6 +214,9 @@
   .part-price .pv-tag{font-size:.68rem;font-weight:700;letter-spacing:.02em;color:#fff;background:var(--moss);padding:2px 7px;border-radius:999px;vertical-align:middle;margin-left:4px;white-space:nowrap;}
   .part-price .pv-card{font-size:.74rem;font-weight:400;color:var(--ink-soft);margin-top:2px;}
   .part-add{margin-top:6px;display:flex;align-items:center;gap:8px;}
+  .part-add-dual{flex-direction:column;align-items:stretch;gap:6px;}
+  .part-pix-btn{background:var(--moss) !important;color:#fff !important;border:1px solid var(--moss);border-radius:0 !important;padding:7px 12px;font-size:.72rem;font-weight:600 !important;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;white-space:nowrap;}
+  .part-pix-btn:hover{filter:brightness(1.1);}
   .part-add-btn{background:var(--ink);color:var(--white);border-radius:999px;padding:6px 12px;font-size:.72rem;font-weight:600;display:flex;align-items:center;gap:6px;transition:.15s;white-space:nowrap;}
   .part-add-btn:hover{background:var(--moss);}
   .part-add-btn.added{background:var(--weave);color:var(--ink);}
@@ -1220,7 +1223,8 @@ footer.rodape .base{margin-top:56px;padding-top:22px;border-top:1px solid var(--
             ${chips}
             <div class="part-price">${precoVitrineHTML(preco)}</div>
           </div>
-          <div class="part-add">
+          <div class="part-add part-add-dual">
+            <button class="part-pix-btn" onclick="comprarPix('${cidSel}')">Comprar no Pix · 20% OFF</button>
             <button class="part-add-btn" onclick="addToCart('${cidSel}', this)">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 4h2l2.4 12.4a2 2 0 0 0 2 1.6h7.2a2 2 0 0 0 2-1.6L21 8H6"/></svg>
               Adicionar
@@ -1339,6 +1343,16 @@ footer.rodape .base{margin-top:56px;padding-top:22px;border-top:1px solid var(--
       setTimeout(()=>{ btn.classList.remove('added'); btn.innerHTML = original; }, 1200);
     }
     toggleCart(true);
+  }
+
+  // Botão de vitrine: coloca a peça no carrinho e abre direto o checkout com Pix (20% OFF).
+  function comprarPix(id){
+    const part = findCartPart(id);
+    if(!part) return;
+    if(!cart.some(c => c.id === id)) cart.push({...part, qty:1});
+    renderCart();
+    checkoutMetodo = 'PIX';
+    abrirCheckout();
   }
 
   function changeQty(id, delta){
