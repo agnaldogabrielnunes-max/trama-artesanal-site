@@ -124,6 +124,7 @@
   <div class="kpi"><small>Já pago</small><div class="grande" id="kPago">R$ 0</div></div>
  </div>
  <h3 style="margin-top:24px">Próximas liberações</h3><div id="pProx" class="box">Nenhuma ainda. Divulgue seu link!</div>
+ <h3 style="margin-top:24px">Material da Tina para hoje</h3><div id="pMat" class="box">Carregando...</div>
 </div>
 
 <h2>Vídeos de treinamento</h2>
@@ -188,8 +189,18 @@ function painel(d){
  $('kProx').textContent = d.proxima_faixa_em? `Faltam ${R$(d.proxima_faixa_em-d.vendas_mes)} para a próxima faixa`:'Você está na faixa máxima';
  $('kRes').textContent=R$(d.reservado); $('kLib').textContent=R$(d.liberado); $('kPago').textContent=R$(d.pago);
  const p=d.proximas||[]; $('pProx').innerHTML = p.length? p.map(x=>`<p><b>${R$(x.valor)}</b> reservado: faltam <b>${x.dias} dia(s)</b> para receber (${new Date(x.liberar_em+'T12:00').toLocaleDateString('pt-BR')}) · previsão após entrega + 7 dias</p>`).join(''):'Nenhuma ainda. Divulgue seu link!';
+ materiais(d.link);
  if(d.ajustes_devedores>0) $('pProx').innerHTML += `<p class="aviso">Há R$ ${d.ajustes_devedores} em descontos por cancelamentos, abatidos das próximas comissões.</p>`;
 }
+async function materiais(link){
+ const hoje=new Date().toISOString().slice(0,10);
+ const {data}=await SB.from('afiliado_materiais').select('data,canal,titulo,conteudo,imagem_url').lte('data',hoje).order('data',{ascending:false}).limit(6);
+ const el=$('pMat'); if(!data||!data.length){ el.textContent='A Tina publica novas ideias todos os dias. Volte amanhã!'; return; }
+ const nomes={whatsapp_status:'Status do WhatsApp',facebook_grupos:'Grupos do Facebook',olx:'Anúncio/classificados',instagram:'Instagram',blog:'Blog da Trama',tiktok:'TikTok / Reels',dica:'Dica do dia'};
+ el.innerHTML=data.map((m,i)=>{const t=String(m.conteudo||'').replace(/\{LINK\}/g,link);return `<div style="border-bottom:1px solid #ddd;padding:10px 0"><b>${esc(m.titulo)}</b> <small>· ${nomes[m.canal]||esc(m.canal)} · ${new Date(m.data+'T12:00').toLocaleDateString('pt-BR')}</small><pre style="white-space:pre-wrap;font:inherit;margin:6px 0">${esc(t)}</pre><button class="sec" data-cp="${i}">Copiar texto</button></div>`}).join('');
+ el.querySelectorAll('[data-cp]').forEach(b=>b.onclick=()=>{const m=data[+b.dataset.cp];navigator.clipboard&&navigator.clipboard.writeText(String(m.conteudo||'').replace(/\{LINK\}/g,link));aviso('Texto copiado!');});
+}
+function esc(t){return String(t).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
 async function sair(){ await SB.auth.signOut(); $('msg').classList.add('oculto'); atualizar(); }
 $('btnSair1').onclick=sair; $('btnSair2').onclick=sair;
 $('btnCopiar').onclick=()=>{ $('pLink').select(); navigator.clipboard&&navigator.clipboard.writeText($('pLink').value); aviso('Link copiado!'); };
