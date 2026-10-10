@@ -1670,6 +1670,7 @@ footer.rodape .base{margin-top:56px;padding-top:22px;border-top:1px solid var(--
         payload.cartao = { encrypted: card.encryptedCard, nomeTitular: nomeCartao, cvv: cvv };
       }
 
+      try{ const r_=JSON.parse(localStorage.getItem('trama_ref')||'null'); if(r_&&r_.c&&Date.now()-r_.t<=30*864e5) payload.ref=r_.c; }catch(e_){}
       const resp = await fetch('/.netlify/functions/criar-pedido', {
         method: 'POST',
         headers: {'Content-Type':'application/json'},

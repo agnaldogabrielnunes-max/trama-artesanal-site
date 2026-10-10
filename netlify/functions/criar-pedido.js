@@ -51,6 +51,7 @@ exports.handler = async function (event) {
     metodoPagamento, // "PIX" ou "CARTAO"
     parcelas,     // número de parcelas (1 a 10), só para cartão
     cartao,       // { encrypted } - token do cartão criptografado pelo SDK do PagBank no navegador
+    ref,          // código do parceiro/afiliado (opcional)
   } = payload;
 
   // --- Validações básicas ---
@@ -201,6 +202,23 @@ exports.handler = async function (event) {
         statusCode: resposta.status,
         body: JSON.stringify({ erro: 'PagBank rejeitou o pedido.', detalhes: dados }),
       };
+    }
+
+    // Atribuição ao parceiro (afiliado): só registra a intenção; a comissão é confirmada depois, com o pedido pago.
+    if (ref) {
+      try {
+        await fetch('https://qgunpfgdsqqgfkimvwhg.supabase.co/rest/v1/rpc/afiliado_registrar_pedido', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', apikey: 'sb_publishable_zf7UMVosztpLCHpAYRvoHA_WX9_X0wy' },
+          body: JSON.stringify({
+            p_codigo: String(ref).toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 30),
+            p_reference_id: referenceId,
+            p_valor_produtos: valorItens - (valorDesconto > 0 ? valorItens * DESCONTO_AVISTA : 0),
+            p_cpf: String(cliente.cpf || ''),
+            p_email: String(cliente.email || ''),
+          }),
+        });
+      } catch (e) { /* não bloqueia a venda */ }
     }
 
     return {
