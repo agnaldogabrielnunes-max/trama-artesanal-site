@@ -1,0 +1,201 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Seja nosso parceiro | Trama Artesanal</title>
+<meta name="description" content="Divulgue a Trama Artesanal com seu link e ganhe comissão por venda.">
+<link rel="stylesheet" href="/blog/blog.css">
+<style>
+ body{font-family:system-ui,sans-serif;font-size:16px}
+ main{max-width:860px;margin:0 auto;padding:8px 5vw 72px}
+ h2{font-family:Georgia,serif;font-weight:400;font-size:28px;margin:40px 0 12px}
+ .passos{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:14px}
+ .passo{border:1px solid var(--line);padding:16px;background:var(--off)}
+ .passo b{display:block;margin-bottom:6px}
+ table{border-collapse:collapse;width:100%;margin:10px 0}
+ td,th{border:1px solid var(--line);padding:10px;text-align:left}
+ th{background:var(--sage)}
+ .box{border:1px solid var(--line);padding:20px;margin:16px 0;background:#fff}
+ label{display:block;margin:12px 0 4px;font-size:14px;color:var(--soft)}
+ input,select,textarea{width:100%;padding:11px;border:1px solid var(--line);font:inherit;background:#fff}
+ button{padding:12px 22px;background:var(--ink);color:#fff;border:0;font:inherit;cursor:pointer;margin-top:14px}
+ button.sec{background:#fff;color:var(--ink);border:1px solid var(--ink)}
+ .row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+ @media(max-width:600px){.row{grid-template-columns:1fr}}
+ .msg{margin:12px 0;padding:12px;background:var(--sage)}
+ .erro{background:#f6dcd7}
+ .contrato{max-height:220px;overflow:auto;border:1px solid var(--line);padding:12px;font-size:14px;background:var(--off)}
+ .grande{font-size:30px;font-family:Georgia,serif}
+ .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px}
+ .kpi{border:1px solid var(--line);padding:14px}
+ .kpi small{color:var(--soft)}
+ .oculto{display:none}
+ .aviso{font-size:13px;color:var(--soft)}
+</style>
+</head>
+<body>
+<header class="topo"><a href="/">TRAMA ARTESANAL</a><nav><a href="/blog/">Blog</a><a href="#area">Área do parceiro</a></nav></header>
+<main>
+<section class="hero" style="padding-left:0;padding-right:0">
+ <small>Programa de parceiros</small>
+ <h1>Divulgue a Trama e ganhe comissão por venda</h1>
+ <p>Cadastre-se, receba seu link exclusivo e divulgue nas suas redes, no WhatsApp, em grupos, blogs e anúncios classificados. Quando a venda pelo seu link for concluída, a comissão é sua.</p>
+</section>
+
+<h2>Como funciona</h2>
+<div class="passos">
+ <div class="passo"><b>1. Cadastro</b>Crie sua conta, envie documento, selfie e comprovante de endereço.</div>
+ <div class="passo"><b>2. Aprovação</b>Nossa equipe confere os dados e libera seu link.</div>
+ <div class="passo"><b>3. Divulgação</b>Poste seu link todo dia. A Tina envia ideias e materiais prontos.</div>
+ <div class="passo"><b>4. Comissão</b>Acompanhe o saldo reservado e a data em que cada parcela é liberada.</div>
+</div>
+
+<h2>Quanto você ganha</h2>
+<table>
+ <tr><th>Vendas pelo seu link no mês</th><th>Comissão</th></tr>
+ <tr><td>Até R$ 49.999,99</td><td>5%</td></tr>
+ <tr><td>A partir de R$ 50.000</td><td>6%</td></tr>
+ <tr><td>A partir de R$ 90.000</td><td>7%</td></tr>
+ <tr><td>A partir de R$ 110.000</td><td>8%</td></tr>
+</table>
+<p class="aviso">Bateu a faixa, o percentual maior vale para todas as vendas do mês. Percentual aplicado sobre o valor do produto pago, sem frete.</p>
+<div class="box">
+ <label for="calc">Simule: quanto você vendeu no mês (R$)?</label>
+ <input id="calc" type="number" min="0" step="100" placeholder="Ex.: 20000">
+ <p id="calcout" class="grande"></p>
+</div>
+
+<h2>Regras importantes</h2>
+<ul style="padding-left:20px;line-height:1.7">
+ <li><b>Pagamento em 2 parcelas:</b> 50% após a confirmação do pagamento da venda (na quinzena seguinte) e 50% 7 dias após a entrega, fim do prazo legal de arrependimento do cliente.</li>
+ <li><b>Pagamentos:</b> quinzenais, por Pix, na chave cadastrada.</li>
+ <li><b>Cancelou ou devolveu?</b> A comissão da venda é estornada. Se já foi paga, o valor é descontado das próximas comissões.</li>
+ <li><b>Divulgue só o que é oficial:</b> não prometa preço, prazo ou condição diferentes dos publicados. Indique que é parceria (#publi). Sem spam.</li>
+ <li><b>Você não negocia nem recebe pagamento de clientes:</b> toda venda é feita no site ou pelo WhatsApp oficial da Trama.</li>
+ <li>Não há exclusividade, horário nem vínculo de emprego. Cada parceiro cuida dos próprios impostos: pessoa física recebe por recibo (RPA), pessoa jurídica emite nota fiscal de serviço.</li>
+</ul>
+
+<h2 id="area">Área do parceiro</h2>
+<div id="msg" class="msg oculto"></div>
+
+<div id="telaLogin" class="box">
+ <div class="row"><div><label>E-mail</label><input id="email" type="email" autocomplete="email"></div>
+ <div><label>Senha</label><input id="senha" type="password" autocomplete="current-password"></div></div>
+ <button id="btnEntrar">Entrar</button> <button id="btnCriar" class="sec">Criar conta</button>
+ <p class="aviso">Ao criar a conta você poderá completar o cadastro na próxima etapa. Pode ser necessário confirmar o e-mail.</p>
+</div>
+
+<div id="telaCadastro" class="box oculto">
+ <h3>Complete seu cadastro</h3>
+ <div class="row"><div><label>Tipo</label><select id="tipo"><option value="pf">Pessoa física</option><option value="pj">Pessoa jurídica</option></select></div>
+ <div><label id="lblDoc">CPF</label><input id="documento" inputmode="numeric"></div></div>
+ <div class="row"><div><label>Nome completo</label><input id="nome"></div><div><label>Razão social (só PJ)</label><input id="razao"></div></div>
+ <div class="row"><div><label>Telefone / WhatsApp</label><input id="telefone" inputmode="tel"></div><div><label>Chave Pix</label><input id="pix"></div></div>
+ <div id="boxPJ" class="oculto"><div class="row"><div><label>Regime (PJ)</label><select id="regime"><option value="mei">MEI</option><option value="simples">Simples Nacional</option><option value="lucro_presumido">Lucro presumido</option><option value="outro">Outro</option></select></div><div><label>Inscrição municipal (se tiver)</label><input id="im"></div></div></div>
+ <div class="row"><div><label>CEP</label><input id="cep" inputmode="numeric"></div><div><label>Rua e número</label><input id="rua"></div></div>
+ <div class="row"><div><label>Bairro</label><input id="bairro"></div><div><label>Cidade / UF</label><input id="cidade" placeholder="Maringá / PR"></div></div>
+ <div class="row"><div><label>Instagram / TikTok / outras redes</label><input id="redes" placeholder="@seuperfil"></div><div></div></div>
+ <div class="row"><div><label>Foto do documento (frente)</label><input id="f1" type="file" accept="image/*,.pdf"></div>
+ <div><label>Selfie segurando o documento</label><input id="f2" type="file" accept="image/*" capture="user"></div></div>
+ <label>Comprovante de endereço</label><input id="f3" type="file" accept="image/*,.pdf">
+ <h4 style="margin-top:20px">Contrato de parceria (minuta v1)</h4>
+ <div id="contrato" class="contrato"></div>
+ <label style="display:flex;gap:8px;align-items:flex-start"><input id="okContrato" type="checkbox" style="width:auto;margin-top:4px"> Li e aceito o contrato (aceite digital com registro de data, IP e versão).</label>
+ <label style="display:flex;gap:8px;align-items:flex-start"><input id="okLgpd" type="checkbox" style="width:auto;margin-top:4px"> Autorizo o tratamento dos meus dados e documentos pela Trama Artesanal (LAR Móveis e Utilidades Ltda) exclusivamente para análise de cadastro, pagamentos e obrigações legais (LGPD).</label>
+ <button id="btnEnviar">Enviar cadastro</button> <button id="btnSair1" class="sec">Sair</button>
+</div>
+
+<div id="telaStatus" class="box oculto"></div>
+
+<div id="telaPainel" class="oculto">
+ <div class="box"><b id="pNome"></b><p>Seu link: <input id="pLink" readonly onclick="this.select()"></p>
+ <button id="btnCopiar">Copiar link</button> <button id="btnSair2" class="sec">Sair</button></div>
+ <div class="kpis">
+  <div class="kpi"><small>Cliques (30 dias)</small><div class="grande" id="kCliques">0</div></div>
+  <div class="kpi"><small>Vendas no mês</small><div class="grande" id="kVendas">R$ 0</div></div>
+  <div class="kpi"><small>Sua comissão atual</small><div class="grande" id="kPct">5%</div><small id="kProx"></small></div>
+  <div class="kpi"><small>Reservado para você</small><div class="grande" id="kRes">R$ 0</div></div>
+  <div class="kpi"><small>Liberado p/ pagamento</small><div class="grande" id="kLib">R$ 0</div></div>
+  <div class="kpi"><small>Já pago</small><div class="grande" id="kPago">R$ 0</div></div>
+ </div>
+ <h3 style="margin-top:24px">Próximas liberações</h3><div id="pProx" class="box">Nenhuma ainda. Divulgue seu link!</div>
+</div>
+
+<h2>Vídeos de treinamento</h2>
+<p class="aviso">Em breve: como se cadastrar, como divulgar e como receber suas comissões.</p>
+</main>
+
+<footer class="rodape"><p>Trama Artesanal · LAR Móveis e Utilidades Ltda · CNPJ 58.372.997/0001-90 · Maringá/PR</p>
+<div class="redes"><a href="https://www.instagram.com/moveistramaartesanal/">Instagram</a><a href="https://www.youtube.com/@moveistramaartesanal">YouTube</a><a href="https://www.facebook.com/profile.php?id=104127901182463">Facebook</a><a href="https://wa.me/5544999104459">WhatsApp</a></div></footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script>
+const CONTRATO = `CONTRATO DE PARCERIA E DIVULGAÇÃO (MINUTA v1)
+1. Objeto: o PARCEIRO divulga produtos da TRAMA ARTESANAL (LAR Móveis e Utilidades Ltda, CNPJ 58.372.997/0001-90) por meio de link exclusivo, sem exclusividade.
+2. Natureza: não há vínculo de emprego, subordinação, horário ou representação comercial. O PARCEIRO não negocia preço ou condições, não recebe valores de clientes e não assume obrigações em nome da Trama.
+3. Comissão: percentual por faixa de vendas mensais pagas pelo link (5%, 6%, 7%, 8%), calculado sobre o valor dos produtos, sem frete.
+4. Pagamento: 50% após a confirmação do pagamento da venda e 50% 7 dias após a entrega, em datas quinzenais, por Pix na chave cadastrada.
+5. Cancelamento/devolução: a comissão é estornada. Valores já pagos poderão ser compensados com comissões futuras e, persistindo saldo devedor, cobrados pelas vias legais.
+6. Divulgação: usar somente informações e materiais oficiais; não prometer preços, prazos ou condições diferentes; identificar a parceria como publicidade; vedado spam, uso de marcas de terceiros e compra pelo próprio link para obter comissão.
+7. Tributos: o PARCEIRO responde pelos próprios tributos. Pessoa física: recibo (RPA), com retenções legais quando aplicáveis. Pessoa jurídica: nota fiscal de serviço. A Trama poderá reter tributos nos termos da lei.
+8. Dados: tratamento conforme a LGPD, apenas para cadastro, pagamento e obrigações legais.
+9. Rescisão: por qualquer parte, a qualquer momento, sem prejuízo das comissões já devidas. Fraude implica bloqueio e perda de comissões.
+10. Foro: Maringá/PR. Aceite digital registrado com data, IP e versão.`;
+const SB = supabase.createClient('https://qgunpfgdsqqgfkimvwhg.supabase.co','sb_publishable_zf7UMVosztpLCHpAYRvoHA_WX9_X0wy');
+const $ = id => document.getElementById(id);
+const R$ = v => 'R$ ' + Number(v||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+function aviso(t, erro){ const m=$('msg'); m.textContent=t; m.className='msg'+(erro?' erro':''); m.classList.remove('oculto'); }
+function mostrar(id){ ['telaLogin','telaCadastro','telaStatus','telaPainel'].forEach(x=>$(x).classList.toggle('oculto',x!==id)); }
+$('contrato').textContent = CONTRATO;
+
+const faixas=[[110000,8],[90000,7],[50000,6],[0,5]];
+$('calc').addEventListener('input',e=>{ const v=+e.target.value||0; const p=faixas.find(f=>v>=f[0])[1]; $('calcout').textContent = v? `${p}% = ${R$(v*p/100)} de comissão`:''; });
+$('tipo').addEventListener('change',()=>{ const pj=$('tipo').value==='pj'; $('lblDoc').textContent=pj?'CNPJ':'CPF'; $('boxPJ').classList.toggle('oculto',!pj); });
+
+async function sha256(t){ const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(t)); return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join(''); }
+
+async function atualizar(){
+ const { data:{ session } } = await SB.auth.getSession();
+ if(!session){ mostrar('telaLogin'); return; }
+ const { data, error } = await SB.rpc('afiliado_meu_resumo');
+ if(error){ aviso('Erro ao carregar: '+error.message,true); mostrar('telaLogin'); return; }
+ if(!data.cadastrado){ $('email').value=session.user.email; mostrar('telaCadastro'); return; }
+ if(data.status==='aprovado'){ painel(data); return; }
+ const msgs={em_analise:'Cadastro recebido. Nossa equipe está conferindo seus documentos. Você será avisado quando seu link for liberado.',aprovado_atendimento:'Documentos conferidos. Falta a aprovação final da diretoria.',recusado:'Seu cadastro não foi aprovado. Fale com o atendimento no WhatsApp (44) 99910-4459.',bloqueado:'Cadastro bloqueado. Fale com o atendimento.',cadastro:'Cadastro incompleto.'};
+ $('telaStatus').innerHTML = `<p>${msgs[data.status]||''}</p><button class="sec" id="btnSair3">Sair</button>`;
+ $('btnSair3').onclick=sair; mostrar('telaStatus');
+}
+function painel(d){
+ mostrar('telaPainel'); $('pNome').textContent='Olá, '+d.nome; $('pLink').value=d.link;
+ $('kCliques').textContent=d.cliques_30d; $('kVendas').textContent=R$(d.vendas_mes); $('kPct').textContent=d.percentual_atual+'%';
+ $('kProx').textContent = d.proxima_faixa_em? `Faltam ${R$(d.proxima_faixa_em-d.vendas_mes)} para a próxima faixa`:'Você está na faixa máxima';
+ $('kRes').textContent=R$(d.reservado); $('kLib').textContent=R$(d.liberado); $('kPago').textContent=R$(d.pago);
+ const p=d.proximas||[]; $('pProx').innerHTML = p.length? p.map(x=>`<p><b>${R$(x.valor)}</b> reservado: faltam <b>${x.dias} dia(s)</b> para receber (${new Date(x.liberar_em+'T12:00').toLocaleDateString('pt-BR')}) · ${x.gatilho==='pagamento_aprovado'?'parcela 1':'parcela 2'}</p>`).join(''):'Nenhuma ainda. Divulgue seu link!';
+ if(d.ajustes_devedores>0) $('pProx').innerHTML += `<p class="aviso">Há R$ ${d.ajustes_devedores} em descontos por cancelamentos, abatidos das próximas comissões.</p>`;
+}
+async function sair(){ await SB.auth.signOut(); $('msg').classList.add('oculto'); atualizar(); }
+$('btnSair1').onclick=sair; $('btnSair2').onclick=sair;
+$('btnCopiar').onclick=()=>{ $('pLink').select(); navigator.clipboard&&navigator.clipboard.writeText($('pLink').value); aviso('Link copiado!'); };
+$('btnEntrar').onclick=async()=>{ const {error}=await SB.auth.signInWithPassword({email:$('email').value.trim(),password:$('senha').value}); if(error) return aviso('Não foi possível entrar: '+error.message,true); $('msg').classList.add('oculto'); atualizar(); };
+$('btnCriar').onclick=async()=>{ const {data,error}=await SB.auth.signUp({email:$('email').value.trim(),password:$('senha').value}); if(error) return aviso('Erro ao criar conta: '+error.message,true); if(data.session){ atualizar(); } else aviso('Conta criada! Confirme seu e-mail e depois clique em Entrar.'); };
+
+async function subir(uid,file,nome){ if(!file) throw new Error('Envie todos os arquivos.'); if(file.size>8*1024*1024) throw new Error('Arquivo acima de 8 MB: '+file.name);
+ const ext=(file.name.split('.').pop()||'jpg').toLowerCase().replace(/[^a-z0-9]/g,''); const path=`${uid}/${nome}_${Date.now()}.${ext}`;
+ const {error}=await SB.storage.from('afiliados-docs').upload(path,file,{upsert:true}); if(error) throw error; return path; }
+$('btnEnviar').onclick=async()=>{
+ try{
+  $('btnEnviar').disabled=true; aviso('Enviando...');
+  const {data:{user}}=await SB.auth.getUser();
+  const [a,b,c]=await Promise.all([subir(user.id,$('f1').files[0],'doc'),subir(user.id,$('f2').files[0],'selfie'),subir(user.id,$('f3').files[0],'endereco')]);
+  const r=await SB.rpc('afiliado_cadastrar',{p:{tipo:$('tipo').value,nome:$('nome').value.trim(),documento:$('documento').value,razao_social:$('razao').value,email:user.email,telefone:$('telefone').value,
+   endereco:{cep:$('cep').value,rua:$('rua').value,bairro:$('bairro').value,cidade:$('cidade').value},redes:{perfil:$('redes').value},chave_pix:$('pix').value.trim(),regime_fiscal:$('regime').value,inscricao_municipal:$('im').value,
+   doc_frente_path:a,selfie_path:b,comprovante_endereco_path:c,aceite_contrato:$('okContrato').checked,lgpd:$('okLgpd').checked,contrato_versao:'v1-minuta',contrato_hash:await sha256(CONTRATO)}});
+  if(r.error) throw r.error; aviso('Cadastro enviado! Em breve entramos em contato.'); atualizar();
+ }catch(e){ aviso(e.message||String(e),true); } finally{ $('btnEnviar').disabled=false; }
+};
+atualizar();
+</script>
+</body>
+</html>
