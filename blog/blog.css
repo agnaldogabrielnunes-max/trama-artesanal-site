@@ -25,3 +25,4 @@ article figcaption{font-family:system-ui,sans-serif;font-size:13px;color:var(--s
 .rodape{border-top:1px solid var(--line);background:var(--off);padding:40px 5vw;font-family:system-ui,sans-serif;font-size:14px;color:var(--soft)}
 .rodape .redes{display:flex;gap:18px;flex-wrap:wrap;margin:14px 0}
 .rodape .redes a{text-decoration:none;color:var(--ink);padding:8px 14px;border:1px solid var(--line);background:#fff;font-size:13px}
+.card.textual{border:1px solid var(--line);padding:26px;background:var(--off)}.card.textual small{font-family:system-ui,sans-serif;letter-spacing:.12em;text-transform:uppercase;color:var(--taupe);font-size:11px}.card.textual h3{margin-top:10px}.ponte{margin-top:36px;padding-top:20px;border-top:1px solid var(--line);color:var(--soft)}
