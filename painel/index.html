@@ -434,8 +434,10 @@ PAGES.feed=async v=>{
 PAGES.feed.meta=['Preview do feed','Como o perfil ficará com os posts agendados'];
 
 PAGES.redes=async v=>{
-  const nets=[['Instagram','ok','Publicação automática ativa'],['Facebook','ok','Funcionando'],['YouTube','warn','Reconectar canal @moveistramaartesanal'],['TikTok','warn','Autorizar no Metricool'],['Pinterest','warn','Autorizar no Metricool'],['Kwai','bad','Sem API oficial · em busca de automação'],['Blog','ok','tramaartesanal.com.br/blog']];
-  v.innerHTML=`<div class="grid g3">${nets.map(([n,c,t])=>`<div class="card"><h3>${n} <span class="pill ${c}">${c==='ok'?'conectado':c==='warn'?'pendente':'indisponível'}</span></h3><p style="color:var(--mut);font-size:13px">${t}</p></div>`).join('')}</div>
+  const MC='https://app.metricool.com/';
+  const nets=[['Instagram','ok','Publicação automática ativa'],['Facebook','ok','Funcionando'],['YouTube','warn','Reconectar canal @moveistramaartesanal',MC],['TikTok','warn','Autorizar no Metricool',MC],['Pinterest','warn','Autorizar no Metricool (conta Business)',MC],['Kwai','bad','Sem API oficial · em busca de automação'],['Blog','ok','tramaartesanal.com.br/blog']];
+  v.innerHTML=`<div class="grid g3">${nets.map(([n,c,t,link])=>`<div class="card"><h3>${n} <span class="pill ${c}">${c==='ok'?'conectado':c==='warn'?'pendente':'indisponível'}</span></h3><p style="color:var(--mut);font-size:13px">${t}</p>${link?`<a class="btn sm" style="margin-top:10px" href="${link}" target="_blank" rel="noopener">Conectar ${n}</a>`:''}</div>`).join('')}</div>
+  <p style="color:var(--mut);font-size:12px;margin-top:12px">Como conectar: clique em <b>Conectar</b>, entre no Metricool, abra a marca da empresa em <b>Configurações da conta → Conexões</b>, escolha a rede e faça o login dela. Depois volte aqui.</p>
   <div class="card" style="margin-top:16px"><h3>Rotina diária combinada</h3>${tbl(['Formato','Horários','Redes'],[['Story','09:30 · 11:00 · 17:30','Instagram, Facebook'],['Feed','12:30 · 18:00','Instagram, Facebook, Pinterest'],['Reel','19:00','Instagram, Facebook, YouTube Shorts, TikTok, Kwai']])}</div>
   <div class="card" style="margin-top:16px"><h3>Regra de qualidade</h3><p style="font-size:13px">Foto de baixa resolução é <b>trocada</b>, nunca publicada (arquivo ≥ 150 KB, sem _thumb, ambientada em alta).</p></div>`;
 };
