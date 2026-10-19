@@ -274,14 +274,6 @@ PAGES.vendas=async v=>{
 };
 PAGES.vendas.meta=['Vendas e pedidos','Orçamentos, pedidos e comissões'];
 
-PAGES.producao=async v=>{
-  const d=await q('solarium_pedidos','numero_pedido,cliente_nome,fornecedor,status_producao,data_entrega_prevista,valor_total',b=>b.not('status_producao','is',null).limit(200));
-  const cols={};d.forEach(p=>{(cols[p.status_producao||'sem status']=cols[p.status_producao||'sem status']||[]).push(p)});
-  const keys=Object.keys(cols);
-  v.innerHTML=keys.length?`<div class="kan">${keys.map(k=>`<div class="col"><h4>${esc(k)}<span>${cols[k].length}</span></h4>${cols[k].map(p=>`<div class="kc"><b>${esc(p.numero_pedido)} · ${esc(p.cliente_nome)}</b><span>${esc(p.fornecedor||'')} · entrega ${D(p.data_entrega_prevista)}</span></div>`).join('')}</div>`).join('')}</div>`:empty('Nenhum pedido em produção.');
-};
-PAGES.producao.meta=['Produção','Kanban de pedidos por etapa (prazo médio 45 dias)'];
-
 /* ---------- fluxo do pedido: orçamento → pagamento → expedição → nota → transporte → baixa ---------- */
 const ETAPAS=[
  ['orcamento_aberto','Orçamento em aberto','Tina / Vendas','vendas'],
@@ -634,6 +626,7 @@ PAGES.equipe.meta=['Empresas e equipe','Marcas gerenciadas pela LAR'];
 <script src="exportar.js"></script>
 <script src="afiliados.js"></script>
 <script src="crm.js"></script>
+<script src="producao.js"></script>
 <script>boot();</script>
 </body>
 </html>
