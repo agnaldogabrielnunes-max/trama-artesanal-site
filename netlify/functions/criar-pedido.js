@@ -14,6 +14,7 @@
 // Por padrão usamos sandbox até a homologação ser concluída.
 
 const { calcularFrete } = require('./frete.js');
+const { registrarPedido, atualizarPagamento } = require('../lib/erp.js');
 
 const PAGBANK_SANDBOX_URL = 'https://sandbox.api.pagseguro.com/orders';
 const PAGBANK_PRODUCAO_URL = 'https://api.pagseguro.com/orders';
@@ -202,6 +203,35 @@ exports.handler = async function (event) {
         statusCode: resposta.status,
         body: JSON.stringify({ erro: 'PagBank rejeitou o pedido.', detalhes: dados }),
       };
+    }
+
+    // Registra o pedido no ERP como "pendente". O webhook marca como pago depois;
+    // cartão aprovado na hora já é atualizado aqui mesmo.
+    try {
+      await registrarPedido({
+        referencia_externa: referenceId,
+        pagbank_order_id: dados.id,
+        cliente_nome: cliente.nome,
+        cliente_email: cliente.email,
+        cliente_cpf: String(cliente.cpf).replace(/\D/g, ''),
+        cliente_telefone: telefoneDigitos,
+        cliente_cep: String(endereco.cep).replace(/\D/g, ''),
+        cliente_endereco: { ...endereco, uf: resultadoFrete.uf },
+        itens: itens.map(item => ({ sku: item.id, nome: item.nome, quantidade: item.quantidade, preco: item.precoUnitario })),
+        valor_total: valorTotal,
+        valor_frete: resultadoFrete.frete,
+        valor_desconto: valorDesconto,
+        forma_pagamento: metodoPagamento === 'PIX' ? 'PIX' : `CARTAO ${parcelas}x`,
+        afiliado_ref: ref || null,
+        pagbank_status: (dados.charges && dados.charges[0] && dados.charges[0].status) || 'WAITING',
+      });
+      const cobranca = dados.charges && dados.charges[0];
+      if (cobranca && ['PAID', 'DECLINED', 'CANCELED'].includes(cobranca.status)) {
+        await atualizarPagamento(referenceId, cobranca.status);
+      }
+    } catch (e) {
+      // Não bloqueia a venda: o cliente já foi cobrado. Fica no log para conferência.
+      console.error('ERP: falha ao registrar pedido do site', referenceId, e.message);
     }
 
     // Atribuição ao parceiro (afiliado): só registra a intenção; a comissão é confirmada depois, com o pedido pago.

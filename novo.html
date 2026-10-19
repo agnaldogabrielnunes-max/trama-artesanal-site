@@ -1573,7 +1573,7 @@ footer.site{background:var(--verde-900);}
           bairro: document.getElementById('ckBairro').value.trim(),
           cidade: document.getElementById('ckCidade').value.trim(),
         },
-        itens: cart.map(c => ({ nome: c.name, quantidade: c.qty, precoUnitario: c.price })),
+        itens: cart.map(c => ({ id: c.id, nome: c.name, quantidade: c.qty, precoUnitario: c.price })),
         metodoPagamento: checkoutMetodo,
       };
 
