@@ -359,18 +359,6 @@ async function abrirPedido(p){
   };
 }
 
-PAGES.crm=async v=>{
-  const d=await q('erp_contatos','nome,tipo,cidade,uf,whatsapp,telefone,instagram,origem,criado_em',b=>b.order('criado_em',{ascending:false}).limit(120));
-  v.innerHTML=`<div class="card">${tbl(['Nome','Tipo','Cidade','WhatsApp','Instagram','Origem'],d.map(c=>[`<b>${esc(c.nome)}</b>`,`<span class="pill tl">${esc(c.tipo||'—')}</span>`,esc([c.cidade,c.uf].filter(Boolean).join('/')),esc(c.whatsapp||c.telefone||''),esc(c.instagram||''),esc(c.origem||'')]))}</div>`;
-};
-PAGES.crm.meta=['Clientes e CRM','Contatos, clientes e representantes'];
-
-PAGES.leads=async v=>{
-  const d=await q('leads_b2b','nome,segmento,cidade_uf,status,proximo_passo,proxima_acao_em,whatsapp,instagram',b=>b.order('criado_em',{ascending:false}).limit(120));
-  v.innerHTML=`<div class="card">${tbl(['Lead','Segmento','Cidade','Status','Próximo passo','Quando'],d.map(l=>[`<b>${esc(l.nome)}</b>`,esc(l.segmento),esc(l.cidade_uf),stPill(l.status),esc(l.proximo_passo),D(l.proxima_acao_em)]))}</div>`;
-};
-PAGES.leads.meta=['Leads B2B','Prospecção de arquitetos, lojas e parceiros'];
-
 PAGES.financeiro=async v=>{
   rangeTool();
   const d=await q('erp_lancamentos','tipo,descricao,categoria,valor,data,vencimento,status,forma_pagamento',b=>b.gte('data',daysAgo(S.range).slice(0,10)).order('data',{ascending:false}).limit(300));
@@ -435,7 +423,7 @@ PAGES.feed.meta=['Preview do feed','Como o perfil ficará com os posts agendados
 
 PAGES.redes=async v=>{
   const MC='https://app.metricool.com/';
-  const nets=[['Instagram','ok','Publicação automática ativa'],['Facebook','ok','Funcionando'],['YouTube','warn','Reconectar canal @moveistramaartesanal',MC],['TikTok','warn','Autorizar no Metricool',MC],['Pinterest','warn','Autorizar no Metricool (conta Business)',MC],['Kwai','bad','Sem API oficial · em busca de automação'],['Blog','ok','tramaartesanal.com.br/blog']];
+  const nets=[['Instagram','ok','Publicação automática ativa'],['Facebook','ok','Funcionando'],['YouTube','ok','Canal @moveistramaartesanal conectado'],['TikTok','ok','Conectado'],['Pinterest','ok','Conectado'],['Kwai','bad','Sem API oficial · em busca de automação'],['Blog','ok','tramaartesanal.com.br/blog']];
   v.innerHTML=`<div class="grid g3">${nets.map(([n,c,t,link])=>`<div class="card"><h3>${n} <span class="pill ${c}">${c==='ok'?'conectado':c==='warn'?'pendente':'indisponível'}</span></h3><p style="color:var(--mut);font-size:13px">${t}</p>${link?`<a class="btn sm" style="margin-top:10px" href="${link}" target="_blank" rel="noopener">Conectar ${n}</a>`:''}</div>`).join('')}</div>
   <p style="color:var(--mut);font-size:12px;margin-top:12px">Como conectar: clique em <b>Conectar</b>, entre no Metricool, abra a marca da empresa em <b>Configurações da conta → Conexões</b>, escolha a rede e faça o login dela. Depois volte aqui.</p>
   <div class="card" style="margin-top:16px"><h3>Rotina diária combinada</h3>${tbl(['Formato','Horários','Redes'],[['Story','09:30 · 11:00 · 17:30','Instagram, Facebook'],['Feed','12:30 · 18:00','Instagram, Facebook, Pinterest'],['Reel','19:00','Instagram, Facebook, YouTube Shorts, TikTok, Kwai']])}</div>
@@ -645,6 +633,7 @@ PAGES.equipe.meta=['Empresas e equipe','Marcas gerenciadas pela LAR'];
 <script src="comparativos.js"></script>
 <script src="exportar.js"></script>
 <script src="afiliados.js"></script>
+<script src="crm.js"></script>
 <script>boot();</script>
 </body>
 </html>
