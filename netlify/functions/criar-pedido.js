@@ -15,6 +15,7 @@
 
 const { calcularFrete } = require('./frete.js');
 const { registrarPedido, atualizarPagamento } = require('../lib/erp.js');
+const { precificarCarrinho } = require('../lib/catalogo.js');
 
 const PAGBANK_SANDBOX_URL = 'https://sandbox.api.pagseguro.com/orders';
 const PAGBANK_PRODUCAO_URL = 'https://api.pagseguro.com/orders';
@@ -48,11 +49,12 @@ exports.handler = async function (event) {
   const {
     cliente,      // { nome, email, cpf, telefone }
     endereco,     // { cep, rua, numero, complemento, bairro, cidade, uf }
-    itens,        // [{ nome, quantidade, precoUnitario }]
+    itens: itensCarrinho, // [{ id, nome, quantidade, precoUnitario }] — o preço é só conferido, nunca usado
     metodoPagamento, // "PIX" ou "CARTAO"
     parcelas,     // número de parcelas (1 a 10), só para cartão
     cartao,       // { encrypted } - token do cartão criptografado pelo SDK do PagBank no navegador
     ref,          // código do parceiro/afiliado (opcional)
+    atacadoToken, // login do lojista (opcional) — dá direito ao desconto de atacado
   } = payload;
 
   // --- Validações básicas ---
@@ -69,7 +71,7 @@ exports.handler = async function (event) {
   if (!telefoneDigitos || telefoneDigitos.length < 10 || telefoneDigitos.length > 11) {
     return { statusCode: 400, body: JSON.stringify({ erro: 'Telefone inválido. Informe DDD + número (10 ou 11 dígitos).' }) };
   }
-  if (!Array.isArray(itens) || itens.length === 0) {
+  if (!Array.isArray(itensCarrinho) || itensCarrinho.length === 0) {
     return { statusCode: 400, body: JSON.stringify({ erro: 'Carrinho vazio.' }) };
   }
   if (!['PIX', 'CARTAO'].includes(metodoPagamento)) {
@@ -80,6 +82,24 @@ exports.handler = async function (event) {
   }
   if (metodoPagamento === 'CARTAO' && (!cartao || !cartao.encrypted)) {
     return { statusCode: 400, body: JSON.stringify({ erro: 'Dados do cartão não foram recebidos corretamente.' }) };
+  }
+
+  // --- Preços vêm do catálogo do banco, nunca do navegador ---
+  let precificado;
+  try {
+    precificado = await precificarCarrinho(itensCarrinho, atacadoToken);
+  } catch (e) {
+    return { statusCode: 502, body: JSON.stringify({ erro: 'Não foi possível conferir os preços agora. Tente de novo em instantes.' }) };
+  }
+  if (precificado.erro) {
+    return { statusCode: 400, body: JSON.stringify({ erro: precificado.erro }) };
+  }
+  const itens = precificado.itens;
+  // Se o preço mostrado ao cliente difere do catálogo (mudou, ou foi alterado no navegador),
+  // não cobra um valor diferente do que ele viu: pede para revisar o carrinho.
+  const divergente = itens.some((item, i) => Math.abs(item.precoUnitario - Number(itensCarrinho[i].precoUnitario)) > 0.01);
+  if (divergente) {
+    return { statusCode: 409, body: JSON.stringify({ erro: 'Os preços do carrinho foram atualizados. Atualize a página, confira o carrinho e finalize de novo.' }) };
   }
 
   // --- Cálculo do valor total dos itens ---

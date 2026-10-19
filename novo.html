@@ -1617,6 +1617,24 @@ footer.site{background:var(--verde-900);}
       }
 
       try{ const r_=JSON.parse(localStorage.getItem('trama_ref')||'null'); if(r_&&r_.c&&Date.now()-r_.t<=30*864e5) payload.ref=r_.c; }catch(e_){}
+      // Lojista logado: renova o login e envia junto, para o servidor confirmar o desconto de atacado.
+      if(descontoAtacadoAtivo){
+        const sa = carregarSessaoAtacado();
+        if(sa && sa.refresh_token){
+          try{
+            const rr = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=refresh_token`, {
+              method: 'POST', headers: { apikey: SUPABASE_ANON_KEY, 'Content-Type': 'application/json' },
+              body: JSON.stringify({ refresh_token: sa.refresh_token })
+            });
+            if(rr.ok){ const nova = await rr.json(); salvarSessaoAtacado(nova, sa.cliente); payload.atacadoToken = nova.access_token; }
+          }catch(e_){}
+        }
+        if(!payload.atacadoToken){
+          mostrarErro('erroPagamento', 'Seu login de lojista expirou. Entre de novo na conta de atacado para manter o desconto.');
+          btn.disabled = false; btn.textContent = 'Confirmar pagamento';
+          return;
+        }
+      }
       const resp = await fetch('/.netlify/functions/criar-pedido', {
         method: 'POST',
         headers: {'Content-Type':'application/json'},
