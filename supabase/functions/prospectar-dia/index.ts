@@ -13,6 +13,10 @@ const sb = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SE
 const J = (b: unknown, s = 200) => new Response(JSON.stringify(b), { status: s, headers: { 'Content-Type': 'application/json' } });
 const dig = (s?: string) => (s || '').replace(/\D/g, '');
 const espera = (ms: number) => new Promise(r => setTimeout(r, ms));
+// Nenhum pedido externo pode segurar o robô: cada fetch tem prazo, e a execução para de pegar
+// buscas novas antes do limite da Edge Function (senão ela é morta no meio e deixa itens travados).
+const PRAZO_FETCH = 25_000;
+const ORCAMENTO_MS = 110_000;
 
 // Segmento da fila → etiquetas do OpenStreetMap.
 const OSM_TAGS: Record<string, string[]> = {
@@ -38,6 +42,7 @@ async function buscarGoogle(f: any): Promise<{ encontrados: number; linhas: Lead
       'X-Goog-FieldMask': 'places.id,places.displayName,places.formattedAddress,places.rating,places.userRatingCount,places.websiteUri,places.nationalPhoneNumber,places.internationalPhoneNumber',
     },
     body: JSON.stringify({ textQuery: f.consulta, languageCode: 'pt-BR', regionCode: 'BR', pageSize: 20 }),
+    signal: AbortSignal.timeout(PRAZO_FETCH),
   });
   if (!r.ok) throw new Error(`Places ${r.status}: ${(await r.text()).slice(0, 200)}`);
   const j = await r.json();
@@ -59,7 +64,7 @@ async function areaDaCidade(cidade: string, uf: string): Promise<string> {
   if (areaCache.has(chave)) return areaCache.get(chave)!;
   await espera(1100);
   const q = encodeURIComponent(`${cidade}, ${uf}, Brasil`);
-  const r = await fetch(`https://nominatim.openstreetmap.org/search?q=${q}&format=json&limit=1&countrycodes=br`, { headers: { 'User-Agent': UA } });
+  const r = await fetch(`https://nominatim.openstreetmap.org/search?q=${q}&format=json&limit=1&countrycodes=br`, { headers: { 'User-Agent': UA }, signal: AbortSignal.timeout(PRAZO_FETCH) });
   if (!r.ok) throw new Error(`Nominatim ${r.status}`);
   const [lugar] = await r.json();
   if (!lugar?.boundingbox) throw new Error(`cidade não encontrada no mapa: ${chave}`);
@@ -73,7 +78,7 @@ async function overpass(consulta: string): Promise<any[]> {
   let ultimoErro = '';
   for (const url of ['https://overpass-api.de/api/interpreter', 'https://overpass.kumi.systems/api/interpreter']) {
     try {
-      const r = await fetch(url, { method: 'POST', headers: { 'User-Agent': UA, 'Content-Type': 'application/x-www-form-urlencoded' }, body: 'data=' + encodeURIComponent(consulta) });
+      const r = await fetch(url, { method: 'POST', headers: { 'User-Agent': UA, 'Content-Type': 'application/x-www-form-urlencoded' }, body: 'data=' + encodeURIComponent(consulta), signal: AbortSignal.timeout(PRAZO_FETCH) });
       if (r.ok) return (await r.json()).elements ?? [];
       ultimoErro = `Overpass ${r.status}`;
     } catch (e) { ultimoErro = String((e as Error).message); }
@@ -85,7 +90,7 @@ async function buscarOSM(f: any): Promise<{ encontrados: number; linhas: Lead[] 
   const tags = OSM_TAGS[f.segmento];
   if (!tags) throw new Error(`segmento sem mapeamento no OpenStreetMap: ${f.segmento}`);
   const bbox = await areaDaCidade(f.cidade, f.uf);
-  const els = await overpass(`[out:json][timeout:40];(${tags.map(t => `nwr[${t}][name](${bbox});`).join('')});out tags 300;`);
+  const els = await overpass(`[out:json][timeout:20];(${tags.map(t => `nwr[${t}][name](${bbox});`).join('')});out tags 300;`);
   const linhas = els.map((el: any) => {
     const t = el.tags ?? {};
     const tel = t['contact:whatsapp'] || t['contact:mobile'] || t.mobile || t.phone || t['contact:phone'] || '';
@@ -114,6 +119,10 @@ Deno.serve(async (req: Request) => {
   const log = async (empresa_id: string, tipo: string, descricao: string, payload: unknown = {}) =>
     sb.from('agente_atividades').insert({ agente_id: agPorEmpresa.get(empresa_id) ?? null, empresa_id, tipo, descricao, payload });
 
+  // Itens que ficaram "em_andamento" de uma execução interrompida voltam para a fila.
+  const travado = new Date(Date.now() - 60 * 60e3).toISOString();
+  await sb.from('prospeccao_fila').update({ status: 'pendente' }).eq('status', 'em_andamento').or(`ultima_execucao.is.null,ultima_execucao.lt.${travado}`);
+
   let { data: fila } = await sb.from('prospeccao_fila').select('*').eq('status', 'pendente').order('prioridade').order('criado_em').limit(lote);
   if (!fila?.length) {
     // fila acabou: recicla as concluídas há mais de 20 dias
@@ -124,8 +133,10 @@ Deno.serve(async (req: Request) => {
 
   const resumo: Record<string, unknown>[] = [];
   const porEmpresa: Record<string, { novos: number; consultas: number }> = {};
+  const inicio = Date.now();
   for (const f of fila ?? []) {
-    await sb.from('prospeccao_fila').update({ status: 'em_andamento' }).eq('id', f.id);
+    if (Date.now() - inicio > ORCAMENTO_MS) break;
+    await sb.from('prospeccao_fila').update({ status: 'em_andamento', ultima_execucao: new Date().toISOString() }).eq('id', f.id);
     try {
       const { encontrados, linhas: base } = fonte === 'google' ? await buscarGoogle(f) : await buscarOSM(f);
       const linhas = base.map(l => ({
