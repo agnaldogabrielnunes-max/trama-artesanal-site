@@ -24,6 +24,12 @@
   force = true
 
 [[redirects]]
+  from = "/mcp/*"
+  to = "/.netlify/functions/mcp/:splat"
+  status = 200
+  force = true
+
+[[redirects]]
   from = "/feed-google.xml"
   to = "/.netlify/functions/feed-google"
   status = 200
