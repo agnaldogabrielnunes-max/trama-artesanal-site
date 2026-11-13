@@ -1,7 +1,7 @@
 // Biblioteca SEO compartilhada — Trama Artesanal
 // Fonte única de: produtos publicáveis, slugs, títulos, descrições e páginas de categoria.
 const SB_URL = "https://qgunpfgdsqqgfkimvwhg.supabase.co";
-const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFndW5wZmdkc3FxZ2ZraW12d2hnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIzMjQyMjIsImV4cCI6MjA5NzkwMDIyMn0.LUbnqiP1DPS1GEPrX5KYjHNYQeL_6V0bVgCzlEg49-Q";
+const SB_KEY = "sb_publishable_zf7UMVosztpLCHpAYRvoHA_WX9_X0wy";
 const SITE = "https://tramaartesanal.com.br";
 const WHATSAPP = "5544999104459";
 
@@ -15,7 +15,7 @@ const EXCLUIR_TIPOS = new Set(["Saarinen"]);
 const EXCLUIR_CATEGORIAS = new Set(["Office"]);
 
 async function sb(path) {
-  const r = await fetch(`${SB_URL}/rest/v1/${path}`, { headers: { apikey: SB_KEY, Authorization: `Bearer ${SB_KEY}` } });
+  const r = await fetch(`${SB_URL}/rest/v1/${path}`, { headers: { apikey: SB_KEY } });
   if (!r.ok) throw new Error("Supabase " + r.status);
   return r.json();
 }
